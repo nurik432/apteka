@@ -64,7 +64,7 @@ app.use(errorHandler);
 const publicDir = path.join(__dirname, '../public');
 if (fs.existsSync(publicDir)) {
   app.use(express.static(publicDir));
-  app.get('*', (req, res) => {
+  app.get(/.*/, (req, res) => {
     if (!req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
       res.sendFile(path.join(publicDir, 'index.html'));
     }
