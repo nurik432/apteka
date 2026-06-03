@@ -10,3 +10,4 @@ start "" "http://localhost:3001"
 
 :: Запускаем сам сервер
 node dist/index.js
+pause
