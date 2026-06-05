@@ -7,7 +7,7 @@ import Layout from '@/components/layout/Layout';
 import LoginPage from '@/pages/LoginPage';
 import DashboardPage from '@/pages/DashboardPage';
 import ProductsPage from '@/pages/ProductsPage';
-import POSPage from '@/pages/POSPage';
+import POSPage from '@/pages/pos/POSPage';
 import WarehousePage from '@/pages/WarehousePage';
 import InventoryPage from '@/pages/InventoryPage';
 import ExpiryPage from '@/pages/ExpiryPage';

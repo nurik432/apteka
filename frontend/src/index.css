@@ -204,3 +204,1176 @@ input:focus, select:focus, textarea:focus {
   outline: none;
   box-shadow: 0 0 0 2px var(--color-ring);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   POS (Cash Register) Module Styles
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Layout ───────────────────────────────────────────────── */
+.pos-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr 160px;
+  grid-template-rows: 1fr;
+  gap: 0;
+  height: calc(100vh - 7rem);
+  overflow: hidden;
+}
+
+/* ─── Left Panel (Categories) ──────────────────────────────── */
+.pos-left-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-card);
+  border-right: 1px solid var(--color-border);
+  overflow: hidden;
+  padding: 12px;
+  gap: 8px;
+}
+
+.pos-search-wrapper {
+  position: relative;
+}
+
+.pos-search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--color-muted-foreground);
+  pointer-events: none;
+}
+
+.pos-search-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 32px 0 34px;
+  border-radius: 10px;
+  font-size: 13px;
+  background: var(--color-muted);
+  color: var(--color-foreground);
+  border: 1px solid var(--color-border);
+  transition: all 0.2s;
+}
+
+.pos-search-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.pos-search-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: var(--color-muted-foreground);
+  font-size: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.pos-search-clear:hover {
+  color: var(--color-destructive);
+}
+
+.pos-hotkey-hint {
+  font-size: 11px;
+  color: var(--color-muted-foreground);
+  text-align: center;
+  padding: 2px 0;
+}
+
+.pos-hotkey-hint kbd {
+  display: inline-block;
+  background: var(--color-muted);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0 4px;
+  font-size: 10px;
+  font-family: 'Inter', monospace;
+  margin-right: 4px;
+}
+
+.pos-categories-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted-foreground);
+  padding: 4px 0;
+}
+
+.pos-categories-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pos-category-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-foreground);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pos-category-btn:hover {
+  background: var(--color-muted);
+}
+
+.pos-category-btn--active {
+  background: var(--color-primary) !important;
+  color: white;
+}
+
+.pos-category-btn-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.pos-category-btn-count {
+  font-size: 11px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 1px 6px;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+.pos-category-btn:not(.pos-category-btn--active) .pos-category-btn-count {
+  background: var(--color-muted);
+  color: var(--color-muted-foreground);
+}
+
+/* ─── Center Area ──────────────────────────────────────────── */
+.pos-center {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--color-background);
+}
+
+/* ─── Barcode Input ────────────────────────────────────────── */
+.pos-barcode-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 10px 16px;
+  background: var(--color-card);
+  border-bottom: 1px solid var(--color-border);
+  position: relative;
+}
+
+.pos-barcode-icon {
+  position: absolute;
+  left: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-primary);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.pos-barcode-input {
+  width: 100%;
+  height: 52px;
+  padding: 0 80px 0 48px;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  background: var(--color-muted);
+  color: var(--color-foreground);
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.pos-barcode-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+  background: var(--color-card);
+}
+
+.pos-barcode-input::placeholder {
+  color: var(--color-muted-foreground);
+  font-weight: 400;
+}
+
+.pos-barcode-hint {
+  position: absolute;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.pos-barcode-hint kbd {
+  display: inline-block;
+  background: var(--color-border);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: 'Inter', monospace;
+  color: var(--color-muted-foreground);
+}
+
+/* ─── Receipt Area ─────────────────────────────────────────── */
+.pos-receipt-area {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.pos-receipt-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 8px;
+  color: var(--color-muted-foreground);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.pos-receipt-empty-icon {
+  opacity: 0.15;
+  color: var(--color-foreground);
+}
+
+.pos-receipt-empty-hint {
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+.pos-receipt-table-wrapper {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Table header */
+.pos-receipt-header {
+  display: grid;
+  grid-template-columns: 40px 1fr 120px 100px 80px 100px 40px;
+  gap: 4px;
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted-foreground);
+  background: var(--color-card);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* Table body */
+.pos-receipt-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Table row */
+.pos-receipt-row {
+  display: grid;
+  grid-template-columns: 40px 1fr 120px 100px 80px 100px 40px;
+  gap: 4px;
+  padding: 6px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: background-color 0.1s;
+  align-items: center;
+  min-height: 48px;
+}
+
+.pos-receipt-row:hover {
+  background: var(--color-muted);
+}
+
+.pos-receipt-row--selected {
+  background: rgba(99, 102, 241, 0.08) !important;
+  box-shadow: inset 3px 0 0 var(--color-primary);
+}
+
+.dark .pos-receipt-row--selected {
+  background: rgba(129, 140, 248, 0.1) !important;
+}
+
+.pos-receipt-col-num {
+  font-size: 12px;
+  color: var(--color-muted-foreground);
+  text-align: center;
+}
+
+.pos-receipt-col-name {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.pos-receipt-item-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pos-receipt-item-unit {
+  font-size: 11px;
+  color: var(--color-muted-foreground);
+}
+
+.pos-receipt-col-qty {
+  text-align: center;
+}
+
+.pos-receipt-qty-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--color-muted);
+  border-radius: 10px;
+  padding: 2px;
+}
+
+.pos-receipt-qty-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-foreground);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pos-receipt-qty-btn:hover {
+  background: var(--color-card);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.pos-receipt-qty-btn:active {
+  transform: scale(0.9);
+}
+
+.pos-receipt-qty-value {
+  min-width: 28px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.pos-receipt-col-price,
+.pos-receipt-col-discount,
+.pos-receipt-col-total {
+  text-align: right;
+}
+
+.pos-receipt-item-total {
+  font-weight: 600;
+}
+
+.pos-receipt-col-discount {
+  color: var(--color-destructive);
+  font-size: 12px;
+}
+
+.pos-receipt-col-actions {
+  text-align: center;
+}
+
+.pos-receipt-delete-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pos-receipt-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-destructive);
+}
+
+/* ─── Center Footer (Totals + Pay) ─────────────────────────── */
+.pos-center-footer {
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--color-card);
+  border-top: 1px solid var(--color-border);
+}
+
+.pos-totals {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.pos-totals-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+}
+
+.pos-totals-row--discount {
+  color: var(--color-destructive);
+}
+
+.pos-totals-row--grand {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-foreground);
+  padding-top: 4px;
+  border-top: 1px solid var(--color-border);
+  margin-top: 4px;
+}
+
+/* ─── Bottom Panel (Product Grid) ──────────────────────────── */
+.pos-bottom-panel {
+  border-top: 1px solid var(--color-border);
+  background: var(--color-card);
+  padding: 10px 16px;
+  min-height: 130px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.pos-product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.pos-product-grid-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100px;
+  color: var(--color-muted-foreground);
+  font-size: 13px;
+}
+
+.pos-product-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--color-muted);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+  min-height: 70px;
+}
+
+.pos-product-card:hover {
+  background: var(--color-background);
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+  transform: translateY(-1px);
+}
+
+.pos-product-card:active {
+  transform: scale(0.97);
+}
+
+.pos-product-card--skeleton {
+  pointer-events: none;
+}
+
+.pos-skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--color-border) 25%, var(--color-muted) 50%, var(--color-border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.pos-skeleton-line--short {
+  width: 60%;
+}
+
+.pos-skeleton-line--long {
+  width: 90%;
+}
+
+.pos-product-card-name {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  color: var(--color-foreground);
+}
+
+.pos-product-card-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pos-product-card-price {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.pos-product-card-stock {
+  font-size: 10px;
+  color: var(--color-muted-foreground);
+  background: var(--color-background);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.pos-product-card-stock--zero {
+  color: var(--color-destructive);
+}
+
+/* ─── Right Panel (Quick Actions) ──────────────────────────── */
+.pos-right-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-card);
+  border-left: 1px solid var(--color-border);
+  padding: 12px 8px;
+  gap: 8px;
+}
+
+.pos-right-panel-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted-foreground);
+  text-align: center;
+  padding-bottom: 4px;
+}
+
+.pos-quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pos-action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 8px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-muted);
+  color: var(--color-foreground);
+  cursor: pointer;
+  transition: all 0.15s;
+  position: relative;
+  font-size: 10px;
+}
+
+.pos-action-btn:hover:not(:disabled) {
+  background: var(--color-background);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.pos-action-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.pos-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pos-action-btn--danger:hover:not(:disabled) {
+  border-color: var(--color-destructive);
+  color: var(--color-destructive);
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.pos-action-btn-label {
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.pos-action-btn-hotkey {
+  display: inline-block;
+  background: var(--color-background);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 0 4px;
+  font-size: 9px;
+  font-family: 'Inter', monospace;
+  color: var(--color-muted-foreground);
+}
+
+.pos-action-btn-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ─── Shared Buttons ───────────────────────────────────────── */
+.pos-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: none;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 12px 24px;
+  min-height: 48px;
+}
+
+.pos-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pos-btn--primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.3);
+}
+
+.pos-btn--primary:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+  transform: translateY(-1px);
+}
+
+.pos-btn--ghost {
+  background: transparent;
+  color: var(--color-foreground);
+  border: 1px solid var(--color-border);
+}
+
+.pos-btn--ghost:hover {
+  background: var(--color-muted);
+}
+
+.pos-btn--pay {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.3);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.pos-btn--pay:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+  transform: translateY(-1px);
+}
+
+.pos-btn--pay:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.pos-btn--pay-main {
+  min-width: 200px;
+  padding: 16px 32px;
+  border-radius: 16px;
+}
+
+.pos-btn--pay-main kbd {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: 4px;
+}
+
+/* ─── Modal Overlay ────────────────────────────────────────── */
+.pos-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.15s ease-out;
+}
+
+.pos-modal-close-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--color-muted-foreground);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pos-modal-close-btn:hover {
+  background: var(--color-muted);
+  color: var(--color-foreground);
+}
+
+/* ─── Calculator Modal ─────────────────────────────────────── */
+.pos-calculator-modal {
+  width: 100%;
+  max-width: 340px;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+}
+
+.pos-calculator-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.pos-calculator-title {
+  font-size: 16px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 240px;
+}
+
+.pos-calculator-subtitle {
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+  margin-top: 2px;
+}
+
+.pos-calculator-display {
+  width: 100%;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 20px;
+  font-size: 32px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  background: var(--color-muted);
+  color: var(--color-foreground);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.pos-calculator-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.pos-calculator-key {
+  height: 56px;
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-foreground);
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.pos-calculator-key:hover {
+  background: var(--color-muted);
+}
+
+.pos-calculator-key:active {
+  transform: scale(0.93);
+  background: var(--color-muted);
+}
+
+.pos-calculator-key--clear {
+  color: var(--color-destructive);
+  font-weight: 800;
+}
+
+.pos-calculator-backspace {
+  width: 100%;
+  height: 44px;
+  border-radius: 10px;
+  border: none;
+  background: var(--color-muted);
+  color: var(--color-muted-foreground);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.pos-calculator-backspace:hover {
+  color: var(--color-foreground);
+}
+
+.pos-calculator-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.pos-calculator-actions .pos-btn {
+  flex: 1;
+}
+
+/* ─── Payment Modal ────────────────────────────────────────── */
+.pos-payment-modal {
+  width: 100%;
+  max-width: 400px;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+}
+
+.pos-payment-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.pos-payment-title {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.pos-payment-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  margin-bottom: 16px;
+}
+
+.pos-payment-total-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-success);
+}
+
+.pos-payment-total-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--color-success);
+}
+
+.pos-payment-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.pos-payment-field {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  background: var(--color-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pos-payment-field--active {
+  border-color: var(--color-primary);
+  background: var(--color-card);
+}
+
+.pos-payment-field-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pos-payment-field-icon--cash {
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--color-success);
+}
+
+.pos-payment-field-icon--card {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--color-info);
+}
+
+.pos-payment-field-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.pos-payment-field-label {
+  font-size: 12px;
+  color: var(--color-muted-foreground);
+}
+
+.pos-payment-field-value {
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pos-payment-presets {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.pos-payment-preset-btn {
+  padding: 6px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-foreground);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pos-payment-preset-btn:hover {
+  background: var(--color-muted);
+  border-color: var(--color-primary);
+}
+
+.pos-payment-change {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: var(--color-warning);
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.pos-payment-change-value {
+  font-weight: 800;
+}
+
+.pos-payment-numpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.pos-numpad-key {
+  height: 48px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-foreground);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pos-numpad-key:hover {
+  background: var(--color-muted);
+}
+
+.pos-numpad-key:active {
+  transform: scale(0.93);
+}
+
+.pos-numpad-key--muted {
+  color: var(--color-muted-foreground);
+}
+
+.pos-payment-modal .pos-btn--pay {
+  width: 100%;
+}
+
+/* ─── Receipt Success Modal ────────────────────────────────── */
+.pos-receipt-modal {
+  width: 100%;
+  max-width: 380px;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  padding: 32px 24px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+  text-align: center;
+}
+
+.pos-receipt-success-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1));
+  color: var(--color-success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+  animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pos-receipt-modal-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.pos-receipt-modal-subtitle {
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+  margin-bottom: 20px;
+}
+
+.pos-receipt-modal-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.pos-receipt-modal-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  text-align: left;
+}
+
+.pos-receipt-modal-item-name {
+  color: var(--color-muted-foreground);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding-right: 12px;
+}
+
+.pos-receipt-modal-item-detail {
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.pos-receipt-modal-total {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+  font-weight: 700;
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.pos-receipt-modal-total-value {
+  color: var(--color-primary);
+}
+
+.pos-receipt-modal-payment {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--color-muted-foreground);
+  padding-bottom: 16px;
+}
+
+.pos-receipt-modal-close {
+  width: 100%;
+}
