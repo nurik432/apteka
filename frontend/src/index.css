@@ -1381,7 +1381,7 @@ input:focus, select:focus, textarea:focus {
 /* ─── Tablet Quantity Modal ────────────────────────────────── */
 .pos-tablet-modal {
   width: 100%;
-  max-width: 380px;
+  max-width: 420px;
   background: var(--color-card);
   border: 1px solid var(--color-border);
   border-radius: 24px;
@@ -1394,15 +1394,16 @@ input:focus, select:focus, textarea:focus {
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 16px;
+  gap: 12px;
 }
 
 .pos-tablet-title {
-  font-size: 16px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 280px;
+  max-width: 320px;
 }
 
 .pos-tablet-subtitle {
@@ -1416,9 +1417,13 @@ input:focus, select:focus, textarea:focus {
 
 .pos-tablet-info {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
   margin-bottom: 16px;
+}
+
+.pos-tablet-info > div:nth-child(3) {
+  grid-column: span 2;
 }
 
 .pos-tablet-info-card {
