@@ -1,26 +1,18 @@
-import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import Sidebar from './Sidebar';
+import Navbar from './Navbar';
 import Header from './Header';
 
 export default function Layout() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
   return (
-    <div className="min-h-screen flex">
-      <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
+    <div className="h-screen flex flex-col bg-background text-foreground overflow-hidden">
+      <Header />
+      <Navbar />
       
-      <div
-        className="flex-1 flex flex-col transition-all duration-300"
-        style={{ marginLeft: sidebarCollapsed ? '68px' : '260px' }}
-      >
-        <Header />
-        <main className="flex-1 p-6 overflow-auto">
-          <div className="animate-fadeIn">
-            <Outlet />
-          </div>
-        </main>
-      </div>
+      <main className="flex-1 overflow-auto p-4 sm:p-6">
+        <div className="animate-fadeIn h-full">
+          <Outlet />
+        </div>
+      </main>
     </div>
   );
 }

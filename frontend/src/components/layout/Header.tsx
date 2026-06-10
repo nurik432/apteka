@@ -1,6 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
-import { Sun, Moon, LogOut, User } from 'lucide-react';
+import { Sun, Moon, LogOut, User, Pill } from 'lucide-react';
 
 const roleLabels: Record<string, string> = {
   ADMIN: 'Администратор',
@@ -15,14 +15,20 @@ export default function Header() {
 
   return (
     <header 
-      className="h-16 flex items-center justify-between px-6 border-b"
+      className="h-16 flex items-center justify-between px-6 border-b shrink-0"
       style={{
         background: 'var(--color-card)',
         borderColor: 'var(--color-border)',
       }}
     >
-      <div>
-        {/* Breadcrumb or page title can go here */}
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+          <Pill className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h1 className="text-lg font-bold gradient-text leading-tight">Аптека</h1>
+          <p className="text-[10px] text-muted-foreground leading-tight -mt-0.5">Система управления</p>
+        </div>
       </div>
 
       <div className="flex items-center gap-4">
