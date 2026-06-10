@@ -174,7 +174,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req: AuthRequest
     const {
       name, categoryId, manufacturerId, country, form, dosage,
       barcode, sku, purchasePrice, sellingPrice, stock,
-      minStock, unit, expiryDate, receivedDate,
+      minStock, unit, expiryDate, receivedDate, piecesPerPack,
     } = req.body;
 
     if (!name || !name.trim()) {
@@ -197,6 +197,7 @@ router.post('/', authMiddleware, upload.single('image'), async (req: AuthRequest
         stock: parseInt(stock) || 0,
         minStock: parseInt(minStock) || 0,
         unit: unit?.trim() || 'шт',
+        piecesPerPack: parseInt(piecesPerPack) || 0,
         expiryDate: expiryDate ? new Date(expiryDate) : null,
         receivedDate: receivedDate ? new Date(receivedDate) : null,
         image: req.file ? `/uploads/${req.file.filename}` : null,
@@ -222,7 +223,7 @@ router.put('/:id', authMiddleware, upload.single('image'), async (req: AuthReque
     const {
       name, categoryId, manufacturerId, country, form, dosage,
       barcode, sku, purchasePrice, sellingPrice, stock,
-      minStock, unit, expiryDate, receivedDate,
+      minStock, unit, expiryDate, receivedDate, piecesPerPack,
     } = req.body;
 
     const data: any = {};
@@ -245,6 +246,7 @@ router.put('/:id', authMiddleware, upload.single('image'), async (req: AuthReque
     if (stock !== undefined) data.stock = parseInt(stock) || 0;
     if (minStock !== undefined) data.minStock = parseInt(minStock) || 0;
     if (unit !== undefined) data.unit = unit?.trim() || 'шт';
+    if (piecesPerPack !== undefined) data.piecesPerPack = parseInt(piecesPerPack) || 0;
     if (expiryDate !== undefined) data.expiryDate = expiryDate ? new Date(expiryDate) : null;
     if (receivedDate !== undefined) data.receivedDate = receivedDate ? new Date(receivedDate) : null;
     if (req.file) data.image = `/uploads/${req.file.filename}`;

@@ -8,6 +8,8 @@ export interface CartItem {
   stock: number;
   discount: number;
   unit?: string;
+  piecesPerPack: number;
+  isCustom?: boolean;
 }
 
 export interface Product {
@@ -18,6 +20,7 @@ export interface Product {
   stock: number;
   barcode?: string;
   unit?: string;
+  piecesPerPack?: number;
   categoryId?: number | null;
   category?: Category | null;
   form?: string;

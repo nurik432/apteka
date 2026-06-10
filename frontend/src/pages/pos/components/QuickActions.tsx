@@ -1,11 +1,12 @@
 import React from 'react';
-import { Trash2, RotateCcw, Percent, PauseCircle } from 'lucide-react';
+import { Trash2, RotateCcw, Percent, PauseCircle, ShoppingBag } from 'lucide-react';
 
 interface QuickActionsProps {
   onClearCart: () => void;
   onReturn: () => void;
   onDiscount: () => void;
   onHoldReceipt: () => void;
+  onCustomItem: () => void;
   cartLength: number;
   heldReceiptsCount: number;
   refocusBarcode: () => void;
@@ -16,11 +17,20 @@ function QuickActions({
   onReturn,
   onDiscount,
   onHoldReceipt,
+  onCustomItem,
   cartLength,
   heldReceiptsCount,
   refocusBarcode,
 }: QuickActionsProps) {
   const actions = [
+    {
+      icon: ShoppingBag,
+      label: 'Разный товар',
+      hotkey: '',
+      onClick: onCustomItem,
+      disabled: false,
+      variant: 'accent' as const,
+    },
     {
       icon: Trash2,
       label: 'Очистить чек',
@@ -63,7 +73,11 @@ function QuickActions({
         {actions.map((action) => (
           <button
             key={action.label}
-            className={`pos-action-btn ${action.variant === 'danger' ? 'pos-action-btn--danger' : ''}`}
+            className={`pos-action-btn ${
+              action.variant === 'danger' ? 'pos-action-btn--danger' : ''
+            } ${
+              action.variant === 'accent' ? 'pos-action-btn--accent' : ''
+            }`}
             disabled={action.disabled}
             onMouseDown={(e) => {
               e.preventDefault();

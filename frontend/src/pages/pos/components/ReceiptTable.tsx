@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Minus, Trash2, ShoppingCart } from 'lucide-react';
+import { Plus, Minus, Trash2, ShoppingCart, Pill } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import type { CartItem } from '../types';
 
@@ -52,6 +52,8 @@ function ReceiptTable({
         {cart.map((item, index) => {
           const itemTotal = item.price * item.quantity - item.discount;
           const isSelected = selectedItemId === item.id;
+          const isTabletSale = item.piecesPerPack > 0;
+          const isCustom = item.isCustom;
 
           return (
             <div
@@ -62,37 +64,52 @@ function ReceiptTable({
             >
               <span className="pos-receipt-col-num">{index + 1}</span>
               <span className="pos-receipt-col-name">
-                <span className="pos-receipt-item-name">{item.name}</span>
-                <span className="pos-receipt-item-unit">{item.unit || 'шт'}</span>
+                <span className="pos-receipt-item-name">
+                  {isTabletSale && <Pill className="w-3.5 h-3.5 pos-receipt-tablet-icon" />}
+                  {item.name}
+                </span>
+                <span className="pos-receipt-item-unit">
+                  {isCustom
+                    ? 'произв.'
+                    : isTabletSale
+                      ? `${item.quantity} шт из ${item.piecesPerPack}`
+                      : item.unit || 'шт'}
+                </span>
               </span>
               <span className="pos-receipt-col-qty">
-                <div className="pos-receipt-qty-controls">
-                  <button
-                    className="pos-receipt-qty-btn"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onDecreaseQty(item.id);
-                      refocusBarcode();
-                    }}
-                    title="Уменьшить"
-                  >
-                    <Minus className="w-3.5 h-3.5" />
-                  </button>
+                {isCustom ? (
+                  <span className="pos-receipt-qty-value">1</span>
+                ) : isTabletSale ? (
                   <span className="pos-receipt-qty-value">{item.quantity}</span>
-                  <button
-                    className="pos-receipt-qty-btn"
-                    onMouseDown={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      onIncreaseQty(item.id);
-                      refocusBarcode();
-                    }}
-                    title="Увеличить"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                ) : (
+                  <div className="pos-receipt-qty-controls">
+                    <button
+                      className="pos-receipt-qty-btn"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onDecreaseQty(item.id);
+                        refocusBarcode();
+                      }}
+                      title="Уменьшить"
+                    >
+                      <Minus className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="pos-receipt-qty-value">{item.quantity}</span>
+                    <button
+                      className="pos-receipt-qty-btn"
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onIncreaseQty(item.id);
+                        refocusBarcode();
+                      }}
+                      title="Увеличить"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
               </span>
               <span className="pos-receipt-col-price">{formatCurrency(item.price)}</span>
               <span className="pos-receipt-col-discount">

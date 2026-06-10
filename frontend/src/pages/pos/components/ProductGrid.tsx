@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package } from 'lucide-react';
+import { Package, Pill } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import type { Product } from '../types';
 
@@ -35,25 +35,50 @@ function ProductGrid({ products, loading, onAddProduct, refocusBarcode }: Produc
 
   return (
     <div className="pos-product-grid">
-      {products.map((product) => (
-        <button
-          key={product.id}
-          className="pos-product-card"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            onAddProduct(product);
-            refocusBarcode();
-          }}
-        >
-          <div className="pos-product-card-name">{product.name}</div>
-          <div className="pos-product-card-info">
-            <span className="pos-product-card-price">{formatCurrency(product.sellingPrice)}</span>
-            <span className={`pos-product-card-stock ${product.stock <= 0 ? 'pos-product-card-stock--zero' : ''}`}>
-              {product.stock} {product.unit || 'шт'}
-            </span>
-          </div>
-        </button>
-      ))}
+      {products.map((product) => {
+        const isTabletSale = (product.piecesPerPack || 0) > 0;
+        const pricePerTablet = isTabletSale
+          ? product.sellingPrice / (product.piecesPerPack || 1)
+          : null;
+
+        return (
+          <button
+            key={product.id}
+            className={`pos-product-card ${isTabletSale ? 'pos-product-card--tablet' : ''}`}
+            onMouseDown={(e) => {
+              e.preventDefault();
+              onAddProduct(product);
+              refocusBarcode();
+            }}
+          >
+            <div className="pos-product-card-name">
+              {product.name}
+              {isTabletSale && (
+                <span className="pos-product-card-tablet-badge">
+                  <Pill className="w-3 h-3" />
+                  Поштучно
+                </span>
+              )}
+            </div>
+            <div className="pos-product-card-info">
+              <div className="pos-product-card-prices">
+                <span className="pos-product-card-price">{formatCurrency(product.sellingPrice)}</span>
+                {pricePerTablet !== null && (
+                  <span className="pos-product-card-price-per-tablet">
+                    {formatCurrency(pricePerTablet)}/шт
+                  </span>
+                )}
+              </div>
+              <span className={`pos-product-card-stock ${product.stock <= 0 ? 'pos-product-card-stock--zero' : ''}`}>
+                {isTabletSale
+                  ? `${product.stock} уп. (${product.stock * (product.piecesPerPack || 1)} шт)`
+                  : `${product.stock} ${product.unit || 'шт'}`
+                }
+              </span>
+            </div>
+          </button>
+        );
+      })}
     </div>
   );
 }

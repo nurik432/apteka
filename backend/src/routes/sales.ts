@@ -24,8 +24,20 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response): Promis
         if (!product) {
           throw new Error(`Товар ID ${item.productId} не найден`);
         }
-        if (product.stock < item.quantity) {
-          throw new Error(`Недостаточно товара "${product.name}" на складе (осталось: ${product.stock})`);
+
+        const qty = parseFloat(item.quantity) || 0;
+
+        if (product.piecesPerPack > 0) {
+          // Для поштучной продажи: stock хранится в пачках, quantity — в таблетках
+          // Доступно таблеток = stock * piecesPerPack
+          const availableTablets = product.stock * product.piecesPerPack;
+          if (availableTablets < qty) {
+            throw new Error(`Недостаточно "${product.name}" на складе (осталось: ${availableTablets} шт, запрошено: ${qty} шт)`);
+          }
+        } else {
+          if (product.stock < qty) {
+            throw new Error(`Недостаточно товара "${product.name}" на складе (осталось: ${product.stock})`);
+          }
         }
       }
 
@@ -41,13 +53,14 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response): Promis
         }
         
         const itemDiscount = item.discount || 0;
-        const itemTotal = (item.price * item.quantity) - itemDiscount;
+        const qty = parseFloat(item.quantity) || 0;
+        const itemTotal = (item.price * qty) - itemDiscount;
         totalAmount += itemTotal;
 
         saleItems.push({
           productId: item.productId || null,
           customName: item.name || null,
-          quantity: item.quantity,
+          quantity: qty,
           price: item.price,
           purchasePrice,
           discount: itemDiscount,
@@ -102,18 +115,33 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response): Promis
       for (const item of items) {
         if (!item.productId) continue;
 
+        const product = await tx.product.findUnique({ where: { id: item.productId } });
+        const qty = parseFloat(item.quantity) || 0;
+
+        // Определяем сколько списать со stock
+        let stockDecrement: number;
+        if (product && product.piecesPerPack > 0) {
+          // stock в пачках, quantity в таблетках
+          // Списываем целые пачки: ceil(таблетки / штук_в_пачке)
+          stockDecrement = Math.ceil(qty / product.piecesPerPack);
+        } else {
+          stockDecrement = Math.ceil(qty);
+        }
+
         await tx.product.update({
           where: { id: item.productId },
-          data: { stock: { decrement: item.quantity } },
+          data: { stock: { decrement: stockDecrement } },
         });
 
         await tx.stockMovement.create({
           data: {
             productId: item.productId,
             type: 'SALE',
-            quantity: item.quantity,
+            quantity: qty,
             price: item.price,
-            reason: `Продажа #${newSale.id}`,
+            reason: product && product.piecesPerPack > 0
+              ? `Продажа #${newSale.id} (${qty} шт из упаковки ${product.piecesPerPack})`
+              : `Продажа #${newSale.id}`,
             userId: req.user!.id,
           },
         });

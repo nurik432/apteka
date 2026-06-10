@@ -48,6 +48,7 @@ model Product {
   purchasePrice Float     @default(0)
   sellingPrice  Float     @default(0)
   stock         Int       @default(0)
+  piecesPerPack Int       @default(0)
   minStock      Int       @default(0)
   unit          String    @default("шт")
   expiryDate    DateTime?
@@ -80,7 +81,7 @@ model StockMovement {
   supplierId Int?
   supplier   Supplier? @relation(fields: [supplierId], references: [id])
   type       String
-  quantity   Int
+  quantity   Float
   price      Float?
   reason     String?
   userId     Int?
@@ -108,7 +109,7 @@ model SaleItem {
   productId     Int?
   product       Product? @relation(fields: [productId], references: [id])
   customName    String?
-  quantity      Int
+  quantity      Float
   price         Float
   purchasePrice Float
   discount      Float   @default(0)

@@ -1377,3 +1377,320 @@ input:focus, select:focus, textarea:focus {
 .pos-receipt-modal-close {
   width: 100%;
 }
+
+/* ─── Tablet Quantity Modal ────────────────────────────────── */
+.pos-tablet-modal {
+  width: 100%;
+  max-width: 380px;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+}
+
+.pos-tablet-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.pos-tablet-title {
+  font-size: 16px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 280px;
+}
+
+.pos-tablet-subtitle {
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pos-tablet-info {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.pos-tablet-info-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--color-muted);
+  font-size: 12px;
+  color: var(--color-primary);
+}
+
+.pos-tablet-info-card > div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.pos-tablet-info-label {
+  font-size: 10px;
+  color: var(--color-muted-foreground);
+  white-space: nowrap;
+}
+
+.pos-tablet-info-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-foreground);
+  white-space: nowrap;
+}
+
+.pos-tablet-info-icon-text {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.pos-tablet-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  height: 72px;
+  border-radius: 16px;
+  background: var(--color-muted);
+  margin-bottom: 8px;
+}
+
+.pos-tablet-display-qty {
+  font-size: 40px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--color-foreground);
+}
+
+.pos-tablet-display-unit {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+}
+
+.pos-tablet-total {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.05));
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-foreground);
+  margin-bottom: 12px;
+}
+
+.pos-tablet-total-value {
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+.pos-tablet-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.pos-tablet-preset-btn {
+  padding: 6px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-foreground);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pos-tablet-preset-btn:hover {
+  background: var(--color-muted);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.pos-tablet-preset-btn--pack {
+  background: rgba(99, 102, 241, 0.08);
+  border-color: rgba(99, 102, 241, 0.2);
+  color: var(--color-primary);
+}
+
+/* ─── Custom Item Modal ────────────────────────────────────── */
+.pos-custom-item-modal {
+  width: 100%;
+  max-width: 400px;
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+}
+
+.pos-custom-item-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.pos-custom-item-header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(234, 88, 12, 0.1));
+  color: var(--color-warning);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pos-custom-item-title {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.pos-custom-item-subtitle {
+  font-size: 13px;
+  color: var(--color-muted-foreground);
+  margin-top: 2px;
+}
+
+.pos-custom-item-header .pos-modal-close-btn {
+  margin-left: auto;
+}
+
+.pos-custom-item-field {
+  margin-bottom: 12px;
+}
+
+.pos-custom-item-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+  margin-bottom: 6px;
+}
+
+.pos-custom-item-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  background: var(--color-muted);
+  color: var(--color-foreground);
+  border: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.pos-custom-item-input:focus {
+  border-color: var(--color-primary);
+  background: var(--color-card);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.pos-custom-item-amount {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: var(--color-muted);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 12px;
+}
+
+.pos-custom-item-amount--active {
+  border-color: var(--color-primary);
+  background: var(--color-card);
+}
+
+.pos-custom-item-amount-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-muted-foreground);
+}
+
+.pos-custom-item-amount-value {
+  font-size: 24px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-foreground);
+}
+
+/* ─── Product Card Tablet Badge ────────────────────────────── */
+.pos-product-card--tablet {
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+.pos-product-card--tablet:hover {
+  border-color: var(--color-primary);
+}
+
+.pos-product-card-tablet-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(139, 92, 246, 0.08));
+  color: var(--color-primary);
+  margin-top: 3px;
+  width: fit-content;
+}
+
+.pos-product-card-prices {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.pos-product-card-price-per-tablet {
+  font-size: 10px;
+  color: var(--color-muted-foreground);
+  font-weight: 500;
+}
+
+/* ─── Receipt Tablet Icon ──────────────────────────────────── */
+.pos-receipt-tablet-icon {
+  display: inline;
+  vertical-align: middle;
+  margin-right: 4px;
+  color: var(--color-primary);
+}
+
+/* ─── Accent Action Button ─────────────────────────────────── */
+.pos-action-btn--accent {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(234, 88, 12, 0.05));
+  border-color: rgba(245, 158, 11, 0.25);
+  color: var(--color-warning);
+}
+
+.pos-action-btn--accent:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(234, 88, 12, 0.1));
+  border-color: var(--color-warning);
+  color: var(--color-warning);
+}

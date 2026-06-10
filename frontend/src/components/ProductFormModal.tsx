@@ -30,6 +30,7 @@ export default function ProductFormModal({ product, initialSearchTerm, onClose, 
     form: '', dosage: '', barcode: '', sku: '',
     purchasePrice: '', sellingPrice: '', stock: '',
     minStock: '', unit: 'шт', expiryDate: '', receivedDate: '',
+    piecesPerPack: '',
   });
 
   useEffect(() => {
@@ -66,6 +67,7 @@ export default function ProductFormModal({ product, initialSearchTerm, onClose, 
         unit: product.unit || 'шт',
         expiryDate: product.expiryDate ? product.expiryDate.split('T')[0] : '',
         receivedDate: product.receivedDate ? product.receivedDate.split('T')[0] : '',
+        piecesPerPack: String(product.piecesPerPack || ''),
       });
     } else if (initialSearchTerm) {
       // If the search term is entirely digits, it's likely a barcode. Otherwise, a name.
@@ -95,6 +97,7 @@ export default function ProductFormModal({ product, initialSearchTerm, onClose, 
         stock: parseInt(form.stock) || 0,
         minStock: parseInt(form.minStock) || 0,
         unit: form.unit,
+        piecesPerPack: parseInt(form.piecesPerPack) || 0,
         expiryDate: form.expiryDate || null,
         receivedDate: form.receivedDate || null,
       };
@@ -191,6 +194,10 @@ export default function ProductFormModal({ product, initialSearchTerm, onClose, 
                   <option value="коробка (кб)">коробка (кб)</option>
                   <option value="кв (камвалют)">кв (камвалют)</option>
                 </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium">Кол-во в упаковке (для поштучной продажи)</label>
+                <input type="number" min="0" className={inputClass} value={form.piecesPerPack} onChange={(e) => setForm({...form, piecesPerPack: e.target.value})} placeholder="0 = продажа целиком" />
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-4">

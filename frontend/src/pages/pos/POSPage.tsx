@@ -12,6 +12,8 @@ import QuickActions from './components/QuickActions';
 import CalculatorModal from './components/CalculatorModal';
 import PaymentModal from './components/PaymentModal';
 import ReceiptModal from './components/ReceiptModal';
+import TabletQtyModal from './components/TabletQtyModal';
+import CustomItemModal from './components/CustomItemModal';
 import type { CartItem, Product, HeldReceipt } from './types';
 
 export default function POSPage() {
@@ -34,6 +36,12 @@ export default function POSPage() {
   const [showDiscountModal, setShowDiscountModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Tablet qty modal
+  const [tabletProduct, setTabletProduct] = useState<Product | null>(null);
+
+  // Custom item modal
+  const [showCustomItemModal, setShowCustomItemModal] = useState(false);
+
   // Held receipts
   const [heldReceipts, setHeldReceipts] = useState<HeldReceipt[]>([]);
 
@@ -43,7 +51,7 @@ export default function POSPage() {
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // ─── Barcode scanner auto-focus ────────────────────────────
-  const hasModal = showPayment || showReceipt || !!calculatorItem || showDiscountModal;
+  const hasModal = showPayment || showReceipt || !!calculatorItem || showDiscountModal || !!tabletProduct || showCustomItemModal;
   const { refocusBarcode } = useBarcodeScanner(barcodeRef, { disabled: hasModal });
 
   // ─── Derived values ────────────────────────────────────────
@@ -92,6 +100,12 @@ export default function POSPage() {
 
   // ─── Cart operations ──────────────────────────────────────
   const addToCart = useCallback((product: Product) => {
+    // If product has piecesPerPack, open tablet modal
+    if ((product.piecesPerPack || 0) > 0) {
+      setTabletProduct(product);
+      return;
+    }
+
     const cartItemId = `product-${product.id}`;
 
     setCart((prev) => {
@@ -117,11 +131,64 @@ export default function POSPage() {
           stock: product.stock,
           discount: 0,
           unit: product.unit || 'шт',
+          piecesPerPack: 0,
         },
       ];
     });
     setSelectedItemId(cartItemId);
   }, []);
+
+  // ─── Add tablet item to cart ──────────────────────────────
+  const addTabletToCart = useCallback((product: Product, tabletCount: number) => {
+    const piecesPerPack = product.piecesPerPack || 1;
+    const pricePerTablet = product.sellingPrice / piecesPerPack;
+    const purchasePricePerTablet = product.purchasePrice / piecesPerPack;
+    const cartItemId = `tablet-${product.id}-${Date.now()}`;
+
+    setCart((prev) => [
+      ...prev,
+      {
+        id: cartItemId,
+        productId: product.id,
+        name: product.name,
+        price: pricePerTablet,
+        purchasePrice: purchasePricePerTablet,
+        quantity: tabletCount,
+        stock: product.stock * piecesPerPack, // доступно таблеток
+        discount: 0,
+        unit: 'шт',
+        piecesPerPack: piecesPerPack,
+      },
+    ]);
+    setSelectedItemId(cartItemId);
+    setTabletProduct(null);
+    refocusBarcode();
+  }, [refocusBarcode]);
+
+  // ─── Add custom item to cart ──────────────────────────────
+  const addCustomItem = useCallback((name: string, amount: number) => {
+    const cartItemId = `custom-${Date.now()}`;
+
+    setCart((prev) => [
+      ...prev,
+      {
+        id: cartItemId,
+        productId: null,
+        name,
+        price: amount,
+        purchasePrice: 0,
+        quantity: 1,
+        stock: 999999,
+        discount: 0,
+        unit: 'шт',
+        piecesPerPack: 0,
+        isCustom: true,
+      },
+    ]);
+    setSelectedItemId(cartItemId);
+    setShowCustomItemModal(false);
+    refocusBarcode();
+  }, [refocusBarcode]);
 
   const handleBarcodeScan = useCallback(
     async (barcode: string) => {
@@ -343,6 +410,7 @@ export default function POSPage() {
         onReturn={handleReturn}
         onDiscount={handleDiscountClick}
         onHoldReceipt={holdReceipt}
+        onCustomItem={() => setShowCustomItemModal(true)}
         cartLength={cart.length}
         heldReceiptsCount={heldReceipts.length}
         refocusBarcode={refocusBarcode}
@@ -359,6 +427,27 @@ export default function POSPage() {
           }}
           onClose={() => {
             setCalculatorItem(null);
+            refocusBarcode();
+          }}
+        />
+      )}
+
+      {tabletProduct && (
+        <TabletQtyModal
+          product={tabletProduct}
+          onConfirm={addTabletToCart}
+          onClose={() => {
+            setTabletProduct(null);
+            refocusBarcode();
+          }}
+        />
+      )}
+
+      {showCustomItemModal && (
+        <CustomItemModal
+          onConfirm={addCustomItem}
+          onClose={() => {
+            setShowCustomItemModal(false);
             refocusBarcode();
           }}
         />
