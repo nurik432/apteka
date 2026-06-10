@@ -4,6 +4,9 @@ cd /d "%~dp0"
 echo Установка зависимостей Backend...
 cd backend
 call npm install
+echo Обновление схемы базы данных...
+call npx prisma generate
+call npx prisma db push --accept-data-loss
 echo Компиляция Backend...
 call npm run build
 
