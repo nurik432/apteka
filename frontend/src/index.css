@@ -215,7 +215,7 @@ input:focus, select:focus, textarea:focus {
   grid-template-columns: 220px 1fr 160px;
   grid-template-rows: 1fr;
   gap: 0;
-  height: calc(100vh - 7rem);
+  height: 100%;
   overflow: hidden;
 }
 
