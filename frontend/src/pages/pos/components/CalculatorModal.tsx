@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Delete, Check } from 'lucide-react';
 import type { CartItem } from '../types';
+import Numpad, { type NumpadKey } from './Numpad';
+import { toast } from 'sonner';
 
 interface CalculatorModalProps {
   item: CartItem;
@@ -33,7 +35,7 @@ function CalculatorModal({ item, onConfirm, onClose }: CalculatorModalProps) {
     const val = parseFloat(input) || 0;
     if (val > 0) {
       if (val > item.stock && item.stock !== 999999) {
-        alert(`Недостаточно товара на складе. Доступно: ${item.stock}`);
+        toast.error(`Недостаточно товара на складе. Доступно: ${item.stock}`);
         return;
       }
       onConfirm(item.id, val);
@@ -58,7 +60,7 @@ function CalculatorModal({ item, onConfirm, onClose }: CalculatorModalProps) {
     return () => window.removeEventListener('keydown', handler);
   }, [handleKey, handleConfirm, onClose]);
 
-  const buttons = [
+  const buttons: NumpadKey[] = [
     '1', '2', '3',
     '4', '5', '6',
     '7', '8', '9',
@@ -91,20 +93,7 @@ function CalculatorModal({ item, onConfirm, onClose }: CalculatorModalProps) {
         </div>
 
         {/* Numpad */}
-        <div className="pos-calculator-grid">
-          {buttons.map((btn) => (
-            <button
-              key={btn}
-              className={`pos-calculator-key ${btn === 'C' ? 'pos-calculator-key--clear' : ''}`}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                handleKey(btn);
-              }}
-            >
-              {btn}
-            </button>
-          ))}
-        </div>
+        <Numpad variant="calculator" keys={buttons} onKey={handleKey} />
 
         {/* Backspace */}
         <button

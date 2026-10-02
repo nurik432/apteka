@@ -14,7 +14,7 @@ import salesRoutes from './routes/sales';
 import supplierRoutes from './routes/suppliers';
 import reportRoutes from './routes/reports';
 import analyticsRoutes from './routes/analytics';
-import importExportRoutes from './routes/import-export';
+import { importRouter, exportRouter } from './routes/import-export';
 import ordersRoutes from './routes/orders';
 
 
@@ -47,8 +47,8 @@ app.use('/api/sales', salesRoutes);
 app.use('/api/suppliers', supplierRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/analytics', analyticsRoutes);
-app.use('/api/import', importExportRoutes);
-app.use('/api/export', importExportRoutes);
+app.use('/api/import', importRouter);
+app.use('/api/export', exportRouter);
 app.use('/api/orders', ordersRoutes);
 
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import api from '@/lib/api';
-import { notifyError } from '@/lib/utils';
+import { notifyError, roleLabels } from '@/lib/utils';
 import { Plus, Edit2, UserCheck, UserX, X, Shield } from 'lucide-react';
 
 interface User {
@@ -12,13 +12,6 @@ interface User {
   active: boolean;
   createdAt: string;
 }
-
-const roleLabels: Record<string, string> = {
-  ADMIN: 'Администратор',
-  MANAGER: 'Руководитель',
-  PHARMACIST: 'Фармацевт',
-  STOREKEEPER: 'Кладовщик',
-};
 
 const roleColors: Record<string, string> = {
   ADMIN: 'from-red-500 to-pink-600',
@@ -69,7 +62,7 @@ export default function UsersPage() {
       setShowForm(false);
       loadUsers();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Ошибка');
+      notifyError(error, 'Ошибка');
     }
   };
 
@@ -82,7 +75,7 @@ export default function UsersPage() {
       }
       loadUsers();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Ошибка');
+      notifyError(error, 'Ошибка');
     }
   };
 

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Banknote, CreditCard, Delete } from 'lucide-react';
+import { X, Banknote, CreditCard } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import Numpad from './Numpad';
 
 interface PaymentModalProps {
   total: number;
@@ -189,47 +190,11 @@ function PaymentModal({ total, onConfirm, onClose, loading }: PaymentModalProps)
         )}
 
         {/* Numpad */}
-        <div className="pos-payment-numpad">
-          {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-            <button
-              key={num}
-              className="pos-numpad-key"
-              onMouseDown={(e) => {
-                e.preventDefault();
-                handleNumpad(String(num));
-              }}
-            >
-              {num}
-            </button>
-          ))}
-          <button
-            className="pos-numpad-key"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              handleNumpad('.');
-            }}
-          >
-            .
-          </button>
-          <button
-            className="pos-numpad-key"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              handleNumpad('0');
-            }}
-          >
-            0
-          </button>
-          <button
-            className="pos-numpad-key pos-numpad-key--muted"
-            onMouseDown={(e) => {
-              e.preventDefault();
-              handleBackspace();
-            }}
-          >
-            <Delete className="w-5 h-5" />
-          </button>
-        </div>
+        <Numpad
+          variant="payment"
+          keys={['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'BS']}
+          onKey={key => (key === 'BS' ? handleBackspace() : handleNumpad(key))}
+        />
 
         {/* Pay button */}
         <button

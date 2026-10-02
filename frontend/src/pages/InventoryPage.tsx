@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import { notifyError } from '@/lib/utils';
 import { ClipboardCheck, Save, AlertTriangle } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Product {
   id: number;
@@ -57,7 +58,7 @@ export default function InventoryPage() {
   const handleSave = async () => {
     const changedItems = items.filter(i => i.diff !== 0);
     if (changedItems.length === 0) {
-      alert('Нет изменений');
+      toast.info('Нет изменений');
       return;
     }
 
@@ -72,10 +73,10 @@ export default function InventoryPage() {
         })),
       });
       setCompleted(true);
-      alert('Инвентаризация проведена успешно');
+      toast.success('Инвентаризация проведена успешно');
       loadProducts();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Ошибка');
+      notifyError(error, 'Ошибка');
     }
     setSaving(false);
   };

@@ -5,6 +5,7 @@ node_modules/
 database/*.db
 database/*.db-journal
 database/.jwt-secret
+database/backups/
 
 # Build output
 frontend/dist/

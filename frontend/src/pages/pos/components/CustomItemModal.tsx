@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Delete, Check, ShoppingBag } from 'lucide-react';
+import { X, Check, ShoppingBag } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import Numpad, { type NumpadKey } from './Numpad';
 
 interface CustomItemModalProps {
   onConfirm: (name: string, amount: number) => void;
@@ -64,7 +65,7 @@ function CustomItemModal({ onConfirm, onClose }: CustomItemModalProps) {
     return () => window.removeEventListener('keydown', handler);
   }, [handleNumpad, handleConfirm, onClose, activeField, amount]);
 
-  const numpadButtons = [
+  const numpadButtons: NumpadKey[] = [
     '1', '2', '3',
     '4', '5', '6',
     '7', '8', '9',
@@ -120,21 +121,14 @@ function CustomItemModal({ onConfirm, onClose }: CustomItemModalProps) {
         </div>
 
         {/* Numpad */}
-        <div className="pos-payment-numpad">
-          {numpadButtons.map((btn) => (
-            <button
-              key={btn}
-              className={`pos-numpad-key ${btn === 'BS' ? 'pos-numpad-key--muted' : ''}`}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                setActiveField('amount');
-                handleNumpad(btn);
-              }}
-            >
-              {btn === 'BS' ? <Delete className="w-5 h-5" /> : btn}
-            </button>
-          ))}
-        </div>
+        <Numpad
+          variant="payment"
+          keys={numpadButtons}
+          onKey={btn => {
+            setActiveField('amount');
+            handleNumpad(btn);
+          }}
+        />
 
         {/* Clear button */}
         <button

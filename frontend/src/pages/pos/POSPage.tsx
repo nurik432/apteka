@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { CreditCard } from 'lucide-react';
 import api from '@/lib/api';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, notifyError } from '@/lib/utils';
 import { useBarcodeScanner } from './hooks/useBarcodeScanner';
 import { useHotkeys } from './hooks/useHotkeys';
 import BarcodeInput from './components/BarcodeInput';
@@ -15,6 +15,7 @@ import ReceiptModal from './components/ReceiptModal';
 import TabletQtyModal from './components/TabletQtyModal';
 import CustomItemModal from './components/CustomItemModal';
 import type { CartItem, Product, HeldReceipt } from './types';
+import { toast } from 'sonner';
 
 export default function POSPage() {
   // ─── State ─────────────────────────────────────────────────
@@ -112,7 +113,7 @@ export default function POSPage() {
       const existing = prev.find((item) => item.id === cartItemId);
       if (existing) {
         if (existing.quantity >= product.stock) {
-          alert('Недостаточно товара на складе');
+          toast.error('Недостаточно товара на складе');
           return prev;
         }
         return prev.map((item) =>
@@ -196,7 +197,7 @@ export default function POSPage() {
         const res = await api.get(`/products/barcode/${barcode}`);
         addToCart(res.data);
       } catch {
-        alert(`Товар со штрихкодом «${barcode}» не найден`);
+        toast.error(`Товар со штрихкодом «${barcode}» не найден`);
       }
       refocusBarcode();
     },
@@ -212,7 +213,7 @@ export default function POSPage() {
         return prev.filter((i) => i.id !== id);
       }
       if (newQty > item.stock && item.stock !== 999999) {
-        alert(`Недостаточно товара на складе. Доступно: ${item.stock}`);
+        toast.error(`Недостаточно товара на складе. Доступно: ${item.stock}`);
         return prev;
       }
       return prev.map((i) => (i.id === id ? { ...i, quantity: newQty } : i));
@@ -275,7 +276,7 @@ export default function POSPage() {
         setShowReceipt(true);
         clearCart();
       } catch (error: any) {
-        alert(error.response?.data?.error || 'Ошибка при создании продажи');
+        notifyError(error, 'Ошибка при создании продажи');
       } finally {
         setLoading(false);
       }
@@ -320,7 +321,7 @@ export default function POSPage() {
 
   // ─── Return (placeholder) ─────────────────────────────────
   const handleReturn = useCallback(() => {
-    alert('Функция возврата: используйте раздел "История продаж" для оформления возврата.');
+    toast.info('Функция возврата: используйте раздел "История продаж" для оформления возврата.');
   }, []);
 
   // ─── Render ───────────────────────────────────────────────

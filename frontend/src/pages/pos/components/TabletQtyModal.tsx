@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Delete, Check, Pill } from 'lucide-react';
+import { X, Check, Pill } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import type { Product } from '../types';
+import Numpad, { type NumpadKey } from './Numpad';
+import { toast } from 'sonner';
 
 interface TabletQtyModalProps {
   product: Product;
@@ -40,7 +42,7 @@ function TabletQtyModal({ product, onConfirm, onClose }: TabletQtyModalProps) {
   const handleConfirm = useCallback(() => {
     if (tabletCount > 0) {
       if (tabletCount > maxTablets) {
-        alert(`Недостаточно таблеток на складе. Доступно: ${maxTablets}`);
+        toast.error(`Недостаточно таблеток на складе. Доступно: ${maxTablets}`);
         return;
       }
       onConfirm(product, tabletCount);
@@ -64,7 +66,7 @@ function TabletQtyModal({ product, onConfirm, onClose }: TabletQtyModalProps) {
     return () => window.removeEventListener('keydown', handler);
   }, [handleKey, handleConfirm, onClose]);
 
-  const buttons = [
+  const buttons: NumpadKey[] = [
     '1', '2', '3',
     '4', '5', '6',
     '7', '8', '9',
@@ -161,20 +163,7 @@ function TabletQtyModal({ product, onConfirm, onClose }: TabletQtyModalProps) {
         )}
 
         {/* Numpad */}
-        <div className="pos-calculator-grid">
-          {buttons.map((btn) => (
-            <button
-              key={btn}
-              className={`pos-calculator-key ${btn === 'C' ? 'pos-calculator-key--clear' : ''}`}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                handleKey(btn);
-              }}
-            >
-              {btn === 'BS' ? <Delete className="w-5 h-5" /> : btn}
-            </button>
-          ))}
-        </div>
+        <Numpad variant="calculator" keys={buttons} onKey={handleKey} />
 
         {/* Action buttons */}
         <div className="pos-calculator-actions">

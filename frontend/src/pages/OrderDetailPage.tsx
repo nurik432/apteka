@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '@/lib/api';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, notifyError } from '@/lib/utils';
 import { ArrowLeft, Save, Plus, Trash2, Search, Zap, CheckCircle2 } from 'lucide-react';
 import ProductFormModal from '@/components/ProductFormModal';
+import { toast } from 'sonner';
 
 interface OrderItem {
   id: number;
@@ -57,7 +58,7 @@ export default function OrderDetailPage() {
       setSuppliers(suppliersRes.data);
     } catch (error) {
       console.error('Load order error:', error);
-      alert('Ошибка при загрузке заказа');
+      toast.error('Ошибка при загрузке заказа');
       navigate('/orders');
     } finally {
       setLoading(false);
@@ -95,7 +96,7 @@ export default function OrderDetailPage() {
       setSearchResults([]);
       loadOrder();
     } catch (error) {
-      alert('Ошибка при добавлении товара');
+      toast.error('Ошибка при добавлении товара');
     }
   };
 
@@ -105,7 +106,7 @@ export default function OrderDetailPage() {
       const res = await api.get('/products?lowStock=true&limit=1000');
       const lowStockProducts = res.data.data;
       if (lowStockProducts.length === 0) {
-        alert('Нет товаров с низким остатком');
+        toast.info('Нет товаров с низким остатком');
         return;
       }
       const items = lowStockProducts.map((p: any) => ({
@@ -114,9 +115,9 @@ export default function OrderDetailPage() {
       }));
       await api.post(`/orders/${order.id}/items`, { items });
       loadOrder();
-      alert(`Добавлено ${items.length} товаров`);
+      toast.success(`Добавлено ${items.length} товаров`);
     } catch (error) {
-      alert('Ошибка при автозаполнении');
+      toast.error('Ошибка при автозаполнении');
     }
   };
 
@@ -137,7 +138,7 @@ export default function OrderDetailPage() {
         return { ...prev, items: newItems, totalAmount: newTotal };
       });
     } catch (error) {
-      alert('Ошибка при обновлении позиции');
+      toast.error('Ошибка при обновлении позиции');
       loadOrder(); // revert on error
     }
   };
@@ -148,7 +149,7 @@ export default function OrderDetailPage() {
       await api.delete(`/orders/${order.id}/items/${itemId}`);
       loadOrder();
     } catch (error) {
-      alert('Ошибка при удалении позиции');
+      toast.error('Ошибка при удалении позиции');
     }
   };
 
@@ -156,10 +157,10 @@ export default function OrderDetailPage() {
     if (!order || !confirm('Подтвердить приход? Это автоматически обновит остатки на складе и цены.')) return;
     try {
       await api.post(`/orders/${order.id}/receive`);
-      alert('Заказ успешно оприходован!');
+      toast.success('Заказ успешно оприходован!');
       loadOrder();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Ошибка при оприходовании');
+      notifyError(error, 'Ошибка при оприходовании');
     }
   };
 
@@ -169,7 +170,7 @@ export default function OrderDetailPage() {
       await api.delete(`/orders/${order.id}`);
       navigate('/orders');
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Ошибка при удалении');
+      notifyError(error, 'Ошибка при удалении');
     }
   };
 

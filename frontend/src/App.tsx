@@ -19,6 +19,7 @@ import SettingsPage from '@/pages/SettingsPage';
 import DictionariesPage from '@/pages/DictionariesPage';
 import OrdersPage from '@/pages/OrdersPage';
 import OrderDetailPage from '@/pages/OrderDetailPage';
+import { pageRoles } from '@/lib/access';
 
 function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -63,63 +64,19 @@ function AppRoutes() {
         </ProtectedRoute>
       }>
         <Route index element={<DashboardPage />} />
-        <Route path="products" element={<ProductsPage />} />
-        <Route path="pos" element={
-          <ProtectedRoute roles={['ADMIN', 'PHARMACIST']}>
-            <POSPage />
-          </ProtectedRoute>
-        } />
-        <Route path="warehouse" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER', 'STOREKEEPER']}>
-            <WarehousePage />
-          </ProtectedRoute>
-        } />
-        <Route path="inventory" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER', 'STOREKEEPER']}>
-            <InventoryPage />
-          </ProtectedRoute>
-        } />
-        <Route path="expiry" element={<ExpiryPage />} />
-        <Route path="suppliers" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER', 'STOREKEEPER']}>
-            <SuppliersPage />
-          </ProtectedRoute>
-        } />
-        <Route path="orders" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER', 'STOREKEEPER']}>
-            <OrdersPage />
-          </ProtectedRoute>
-        } />
-        <Route path="orders/:id" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER', 'STOREKEEPER']}>
-            <OrderDetailPage />
-          </ProtectedRoute>
-        } />
-        <Route path="reports" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
-            <ReportsPage />
-          </ProtectedRoute>
-        } />
-        <Route path="analytics" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
-            <AnalyticsPage />
-          </ProtectedRoute>
-        } />
-        <Route path="users" element={
-          <ProtectedRoute roles={['ADMIN']}>
-            <UsersPage />
-          </ProtectedRoute>
-        } />
-        <Route path="dictionaries" element={
-          <ProtectedRoute roles={['ADMIN', 'MANAGER']}>
-            <DictionariesPage />
-          </ProtectedRoute>
-        } />
-        <Route path="settings" element={
-          <ProtectedRoute roles={['ADMIN']}>
-            <SettingsPage />
-          </ProtectedRoute>
-        } />
+        <Route path="products" element={<ProtectedRoute roles={pageRoles.products}><ProductsPage /></ProtectedRoute>} />
+        <Route path="pos" element={<ProtectedRoute roles={pageRoles.pos}><POSPage /></ProtectedRoute>} />
+        <Route path="warehouse" element={<ProtectedRoute roles={pageRoles.warehouse}><WarehousePage /></ProtectedRoute>} />
+        <Route path="inventory" element={<ProtectedRoute roles={pageRoles.inventory}><InventoryPage /></ProtectedRoute>} />
+        <Route path="expiry" element={<ProtectedRoute roles={pageRoles.expiry}><ExpiryPage /></ProtectedRoute>} />
+        <Route path="suppliers" element={<ProtectedRoute roles={pageRoles.suppliers}><SuppliersPage /></ProtectedRoute>} />
+        <Route path="orders" element={<ProtectedRoute roles={pageRoles.orders}><OrdersPage /></ProtectedRoute>} />
+        <Route path="orders/:id" element={<ProtectedRoute roles={pageRoles.orders}><OrderDetailPage /></ProtectedRoute>} />
+        <Route path="reports" element={<ProtectedRoute roles={pageRoles.reports}><ReportsPage /></ProtectedRoute>} />
+        <Route path="analytics" element={<ProtectedRoute roles={pageRoles.analytics}><AnalyticsPage /></ProtectedRoute>} />
+        <Route path="users" element={<ProtectedRoute roles={pageRoles.users}><UsersPage /></ProtectedRoute>} />
+        <Route path="dictionaries" element={<ProtectedRoute roles={pageRoles.dictionaries}><DictionariesPage /></ProtectedRoute>} />
+        <Route path="settings" element={<ProtectedRoute roles={pageRoles.settings}><SettingsPage /></ProtectedRoute>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

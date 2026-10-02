@@ -8,11 +8,13 @@ import path from 'path';
 import fs from 'fs';
 import { Readable } from 'stream';
 
-const router = Router();
+// Импорт монтируется на /api/import, экспорт — на /api/export (см. index.ts)
+export const importRouter = Router();
+export const exportRouter = Router();
 const uploadImport = multer({ dest: path.join(__dirname, '../../uploads/temp') });
 
 // POST /api/import/products — импорт товаров из XLSX
-router.post('/products', authMiddleware, uploadImport.single('file'), async (req: AuthRequest, res: Response): Promise<void> => {
+importRouter.post('/products', authMiddleware, uploadImport.single('file'), async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.file) {
       res.status(400).json({ error: 'Загрузите файл' });
@@ -128,7 +130,7 @@ router.post('/products', authMiddleware, uploadImport.single('file'), async (req
 });
 
 // GET /api/export/products — экспорт товаров в XLSX
-router.get('/products', authMiddleware, async (_req: AuthRequest, res: Response): Promise<void> => {
+exportRouter.get('/products', authMiddleware, async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
     const products = await prisma.product.findMany({
       include: { category: true, manufacturer: true },
@@ -195,7 +197,7 @@ router.get('/products', authMiddleware, async (_req: AuthRequest, res: Response)
 });
 
 // GET /api/export/sales — экспорт продаж в XLSX
-router.get('/sales', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+exportRouter.get('/sales', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const dateFrom = req.query.dateFrom as string;
     const dateTo = req.query.dateTo as string;
@@ -263,7 +265,7 @@ router.get('/sales', authMiddleware, async (req: AuthRequest, res: Response): Pr
 });
 
 // GET /api/export/report-pdf — экспорт отчёта в PDF
-router.get('/report-pdf', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
+exportRouter.get('/report-pdf', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const period = (req.query.period as string) || 'month';
     let startDate = new Date();
@@ -317,7 +319,7 @@ router.get('/report-pdf', authMiddleware, async (req: AuthRequest, res: Response
 });
 
 // GET /api/export/backup — резервная копия базы данных (SQLite)
-router.get('/backup', authMiddleware, roleGuard('ADMIN'), async (_req: AuthRequest, res: Response): Promise<void> => {
+exportRouter.get('/backup', authMiddleware, roleGuard('ADMIN'), async (_req: AuthRequest, res: Response): Promise<void> => {
   const pad = (n: number) => String(n).padStart(2, '0');
   const now = new Date();
   const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
@@ -338,6 +340,4 @@ router.get('/backup', authMiddleware, roleGuard('ADMIN'), async (_req: AuthReque
     res.status(500).json({ error: 'Не удалось создать резервную копию' });
   }
 });
-
-export default router;
 

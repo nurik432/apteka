@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
+import { pageRoles } from '@/lib/access';
 import {
   LayoutDashboard,
   Package,
@@ -35,46 +36,42 @@ interface MenuGroup {
 
 type MenuEntry = MenuItem | MenuGroup;
 
-const ALL = ['ADMIN', 'MANAGER', 'PHARMACIST', 'STOREKEEPER'];
-const STOCK = ['ADMIN', 'MANAGER', 'STOREKEEPER'];
-const MGMT = ['ADMIN', 'MANAGER'];
-
 const menu: MenuEntry[] = [
-  { path: '/', icon: LayoutDashboard, label: 'Главная', roles: ALL },
-  { path: '/pos', icon: ShoppingCart, label: 'Касса', roles: ['ADMIN', 'PHARMACIST'] },
+  { path: '/', icon: LayoutDashboard, label: 'Главная', roles: pageRoles.dashboard },
+  { path: '/pos', icon: ShoppingCart, label: 'Касса', roles: pageRoles.pos },
   {
     label: 'Товары',
     icon: Package,
     items: [
-      { path: '/products', icon: Package, label: 'Товары', roles: ALL },
-      { path: '/expiry', icon: AlertTriangle, label: 'Сроки годности', roles: ALL },
-      { path: '/dictionaries', icon: BookMarked, label: 'Справочники', roles: MGMT },
+      { path: '/products', icon: Package, label: 'Товары', roles: pageRoles.products },
+      { path: '/expiry', icon: AlertTriangle, label: 'Сроки годности', roles: pageRoles.expiry },
+      { path: '/dictionaries', icon: BookMarked, label: 'Справочники', roles: pageRoles.dictionaries },
     ],
   },
   {
     label: 'Склад',
     icon: Warehouse,
     items: [
-      { path: '/warehouse', icon: Warehouse, label: 'Движение товара', roles: STOCK },
-      { path: '/inventory', icon: ClipboardList, label: 'Инвентаризация', roles: STOCK },
-      { path: '/orders', icon: FileText, label: 'Заказы', roles: STOCK },
-      { path: '/suppliers', icon: Truck, label: 'Поставщики', roles: STOCK },
+      { path: '/warehouse', icon: Warehouse, label: 'Движение товара', roles: pageRoles.warehouse },
+      { path: '/inventory', icon: ClipboardList, label: 'Инвентаризация', roles: pageRoles.inventory },
+      { path: '/orders', icon: FileText, label: 'Заказы', roles: pageRoles.orders },
+      { path: '/suppliers', icon: Truck, label: 'Поставщики', roles: pageRoles.suppliers },
     ],
   },
   {
     label: 'Отчёты',
     icon: BarChart3,
     items: [
-      { path: '/reports', icon: BarChart3, label: 'Отчёты', roles: MGMT },
-      { path: '/analytics', icon: TrendingUp, label: 'Аналитика', roles: MGMT },
+      { path: '/reports', icon: BarChart3, label: 'Отчёты', roles: pageRoles.reports },
+      { path: '/analytics', icon: TrendingUp, label: 'Аналитика', roles: pageRoles.analytics },
     ],
   },
   {
     label: 'Админ',
     icon: ShieldCheck,
     items: [
-      { path: '/users', icon: Users, label: 'Пользователи', roles: ['ADMIN'] },
-      { path: '/settings', icon: Settings, label: 'Настройки', roles: ['ADMIN'] },
+      { path: '/users', icon: Users, label: 'Пользователи', roles: pageRoles.users },
+      { path: '/settings', icon: Settings, label: 'Настройки', roles: pageRoles.settings },
     ],
   },
 ];

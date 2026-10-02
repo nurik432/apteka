@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '@/lib/api';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, notifyError } from '@/lib/utils';
 import { Plus, Search, ClipboardList, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Order {
   id: number;
@@ -41,7 +42,7 @@ export default function OrdersPage() {
       const res = await api.post('/orders', {});
       navigate(`/orders/${res.data.id}`);
     } catch (error: any) {
-      alert('Ошибка при создании заказа');
+      toast.error('Ошибка при создании заказа');
     }
   };
 
@@ -52,7 +53,7 @@ export default function OrdersPage() {
       await api.delete(`/orders/${id}`);
       loadOrders();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Ошибка при удалении');
+      notifyError(error, 'Ошибка при удалении');
     }
   };
 

@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import api from '@/lib/api';
-import { formatCurrency, formatDate, getExpiryStatus, getExpiryBadgeClass, getExpiryLabel } from '@/lib/utils';
+import { formatCurrency, formatDate, getExpiryStatus, getExpiryBadgeClass, getExpiryLabel, notifyError } from '@/lib/utils';
 import {
   Plus, Search, Download, Upload, Edit2, Trash2, X,
   ChevronLeft, ChevronRight, Filter,
 } from 'lucide-react';
 import ProductFormModal from '@/components/ProductFormModal';
+import { toast } from 'sonner';
 
 interface Product {
   id: number;
@@ -129,7 +130,7 @@ export default function ProductsPage() {
       await api.delete(`/products/${id}`);
       loadProducts();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Ошибка при удалении');
+      notifyError(error, 'Ошибка при удалении');
     }
   };
 
@@ -143,7 +144,7 @@ export default function ProductsPage() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (error) {
-      alert('Ошибка при экспорте');
+      toast.error('Ошибка при экспорте');
     }
   };
 
@@ -158,10 +159,10 @@ export default function ProductsPage() {
       const res = await api.post('/import/products', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      alert(`Импорт завершён: ${res.data.imported} добавлено, ${res.data.skipped} пропущено`);
+      toast.success(`Импорт завершён: ${res.data.imported} добавлено, ${res.data.skipped} пропущено`);
       loadProducts();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Ошибка при импорте');
+      notifyError(error, 'Ошибка при импорте');
     }
     e.target.value = '';
   };

@@ -3,6 +3,7 @@ import api from '@/lib/api';
 import { formatCurrency, formatDateTime, notifyError } from '@/lib/utils';
 import { PackagePlus, PackageMinus, Undo2, History, ChevronLeft, ChevronRight, Search, Plus } from 'lucide-react';
 import ProductFormModal from '@/components/ProductFormModal';
+import { toast } from 'sonner';
 
 interface Product { id: number; name: string; stock: number; }
 interface Supplier { id: number; name: string; }
@@ -78,7 +79,7 @@ export default function WarehousePage() {
     e.preventDefault();
     if (tab === 'receipt') {
       if (receiptItems.length === 0) {
-        alert('Добавьте товары для прихода');
+        toast.error('Добавьте товары для прихода');
         return;
       }
       try {
@@ -92,12 +93,12 @@ export default function WarehousePage() {
             sellingPrice: i.sellingPrice
           }))
         });
-        alert('Приход успешно оформлен');
+        toast.success('Приход успешно оформлен');
         setReceiptItems([]);
         setForm({ ...form, supplierId: '', reason: '' });
         loadProducts();
       } catch (error: any) {
-        alert(error.response?.data?.error || 'Ошибка');
+        notifyError(error, 'Ошибка');
       }
       return;
     }
@@ -105,11 +106,11 @@ export default function WarehousePage() {
     const endpoint = tab === 'writeoff' ? '/warehouse/write-off' : '/warehouse/return';
     try {
       await api.post(endpoint, form);
-      alert('Операция выполнена');
+      toast.success('Операция выполнена');
       setForm({ productId: '', quantity: '', price: '', sellingPrice: '', supplierId: '', reason: '' });
       loadProducts();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Ошибка');
+      notifyError(error, 'Ошибка');
     }
   };
 

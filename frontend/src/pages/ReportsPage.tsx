@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import api from '@/lib/api';
 import { formatCurrency, formatDateTime, notifyError } from '@/lib/utils';
 import { Download, FileText, Calendar } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function ReportsPage() {
   const [period, setPeriod] = useState('day');
@@ -37,7 +38,7 @@ export default function ReportsPage() {
       const a = document.createElement('a');
       a.href = url; a.download = 'sales-report.xlsx'; a.click();
       URL.revokeObjectURL(url);
-    } catch { alert('Ошибка при экспорте'); }
+    } catch { toast.error('Ошибка при экспорте'); }
   };
 
   const exportPDF = async () => {
@@ -47,7 +48,7 @@ export default function ReportsPage() {
       const a = document.createElement('a');
       a.href = url; a.download = `report-${period}.pdf`; a.click();
       URL.revokeObjectURL(url);
-    } catch { alert('Ошибка при экспорте PDF'); }
+    } catch { toast.error('Ошибка при экспорте PDF'); }
   };
 
   const summary = reportData?.summary;

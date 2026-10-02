@@ -59,7 +59,7 @@ export default function DictionariesPage() {
       setShowForm(false);
       loadData();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Ошибка');
+      notifyError(error, 'Ошибка');
     }
   };
 
@@ -70,7 +70,7 @@ export default function DictionariesPage() {
       await api.delete(`${endpoint}/${id}`);
       loadData();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Ошибка удаления');
+      notifyError(error, 'Ошибка удаления');
     }
   };
 

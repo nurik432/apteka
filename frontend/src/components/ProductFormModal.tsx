@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import api from '@/lib/api';
+import { notifyError } from '@/lib/utils';
 
 interface Category {
   id: number;
@@ -110,7 +111,7 @@ export default function ProductFormModal({ product, initialSearchTerm, onClose, 
       }
       onSuccess(res.data);
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Ошибка при сохранении товара');
+      notifyError(error, 'Ошибка при сохранении товара');
     }
   };
 

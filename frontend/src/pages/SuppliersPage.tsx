@@ -61,7 +61,7 @@ export default function SuppliersPage() {
       setShowForm(false);
       loadSuppliers();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Ошибка');
+      notifyError(error, 'Ошибка');
     }
   };
 
@@ -71,7 +71,7 @@ export default function SuppliersPage() {
       await api.delete(`/suppliers/${id}`);
       loadSuppliers();
     } catch (error: any) {
-      alert(error.response?.data?.error || 'Ошибка');
+      notifyError(error, 'Ошибка');
     }
   };
 

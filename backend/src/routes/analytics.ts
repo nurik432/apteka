@@ -4,6 +4,47 @@ import { AuthRequest, authMiddleware } from '../middleware/auth';
 
 const router = Router();
 
+const MAX_RANGE_DAYS = 366;
+
+// Ключ дня по местному времени (toISOString дал бы UTC и сдвинул ночные продажи на прошлый день)
+const localDayKey = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+const parseDay = (value: unknown): Date | null => {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const [y, m, d] = value.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  return date.getMonth() === m - 1 ? date : null;
+};
+
+/**
+ * Период из ?from=YYYY-MM-DD&to=YYYY-MM-DD (оба дня включительно, местное время).
+ * Без параметров — последние defaultDays дней, включая сегодня.
+ */
+function parseRange(query: Record<string, unknown>, defaultDays: number):
+  { start: Date; end: Date; days: number } | { error: string } {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  let from = parseDay(query.from);
+  let to = parseDay(query.to);
+  if ((query.from && !from) || (query.to && !to)) return { error: 'Неверный формат даты (нужно ГГГГ-ММ-ДД)' };
+
+  to = to ?? today;
+  if (!from) {
+    from = new Date(to);
+    from.setDate(from.getDate() - (defaultDays - 1));
+  }
+  if (from > to) return { error: 'Дата начала позже даты окончания' };
+
+  const days = Math.round((to.getTime() - from.getTime()) / 86400000) + 1;
+  if (days > MAX_RANGE_DAYS) return { error: `Период не может быть больше ${MAX_RANGE_DAYS} дней` };
+
+  const end = new Date(to);
+  end.setDate(end.getDate() + 1); // конец не включительно
+  return { start: from, end, days };
+}
+
 // GET /api/analytics/dashboard — все метрики для Dashboard
 router.get('/dashboard', authMiddleware, async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -68,31 +109,31 @@ router.get('/dashboard', authMiddleware, async (_req: AuthRequest, res: Response
   }
 });
 
-// GET /api/analytics/sales-by-day — продажи по дням (последние 30 дней)
-router.get('/sales-by-day', authMiddleware, async (_req: AuthRequest, res: Response): Promise<void> => {
+// GET /api/analytics/sales-by-day?from&to — продажи по дням (по умолчанию последние 30 дней)
+router.get('/sales-by-day', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const days = 30;
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
-    startDate.setHours(0, 0, 0, 0);
+    const range = parseRange(req.query, 30);
+    if ('error' in range) {
+      res.status(400).json({ error: range.error });
+      return;
+    }
 
     const sales = await prisma.sale.findMany({
-      where: { createdAt: { gte: startDate } },
+      where: { createdAt: { gte: range.start, lt: range.end } },
       include: { items: true },
     });
 
     // Группируем по дням
     const dayMap = new Map<string, { revenue: number; profit: number; checks: number }>();
-    
-    for (let i = 0; i < days; i++) {
-      const date = new Date();
-      date.setDate(date.getDate() - (days - 1 - i));
-      const key = date.toISOString().split('T')[0];
-      dayMap.set(key, { revenue: 0, profit: 0, checks: 0 });
+
+    for (let i = 0; i < range.days; i++) {
+      const date = new Date(range.start);
+      date.setDate(date.getDate() + i);
+      dayMap.set(localDayKey(date), { revenue: 0, profit: 0, checks: 0 });
     }
 
     for (const sale of sales) {
-      const key = sale.createdAt.toISOString().split('T')[0];
+      const key = localDayKey(sale.createdAt);
       const existing = dayMap.get(key);
       if (existing) {
         existing.revenue += sale.finalAmount;
@@ -161,15 +202,26 @@ router.get('/sales-by-month', authMiddleware, async (_req: AuthRequest, res: Res
   }
 });
 
-// GET /api/analytics/top-products — топ-10 товаров
-router.get('/top-products', authMiddleware, async (_req: AuthRequest, res: Response): Promise<void> => {
+// GET /api/analytics/top-products?from&to — топ-10 товаров (по умолчанию за последний месяц)
+router.get('/top-products', authMiddleware, async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const monthStart = new Date();
-    monthStart.setMonth(monthStart.getMonth() - 1);
+    let where: { gte: Date; lt?: Date };
+    if (req.query.from || req.query.to) {
+      const range = parseRange(req.query, 30);
+      if ('error' in range) {
+        res.status(400).json({ error: range.error });
+        return;
+      }
+      where = { gte: range.start, lt: range.end };
+    } else {
+      const monthStart = new Date();
+      monthStart.setMonth(monthStart.getMonth() - 1);
+      where = { gte: monthStart };
+    }
 
     const saleItems = await prisma.saleItem.findMany({
       where: {
-        sale: { createdAt: { gte: monthStart } },
+        sale: { createdAt: where },
       },
       include: { product: { select: { name: true } } },
     });
