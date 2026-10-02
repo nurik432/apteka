@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import { notifyError } from '@/lib/utils';
 import { Plus, Edit2, Trash2, X, Tags, Building2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
@@ -30,7 +31,7 @@ export default function DictionariesPage() {
         const res = await api.get('/manufacturers');
         setManufacturers(res.data);
       }
-    } catch { }
+    } catch (err) { notifyError(err, 'Не удалось загрузить справочник'); }
     setLoading(false);
   };
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import api from '@/lib/api';
+import { notifyError } from '@/lib/utils';
 import { Plus, Edit2, UserCheck, UserX, X, Shield } from 'lucide-react';
 
 interface User {
@@ -39,7 +40,7 @@ export default function UsersPage() {
     try {
       const res = await api.get('/users');
       setUsers(res.data);
-    } catch { }
+    } catch (err) { notifyError(err, 'Не удалось загрузить пользователей'); }
     setLoading(false);
   };
 
@@ -144,7 +145,23 @@ export default function UsersPage() {
               {!editing && (
                 <div><label className="text-sm font-medium">Логин *</label><input className={inputClass} style={inputStyle} value={form.username} onChange={e => setForm({...form, username: e.target.value})} required /></div>
               )}
-              <div><label className="text-sm font-medium">{editing ? 'Новый пароль (оставьте пустым, чтобы не менять)' : 'Пароль *'}</label><input type="password" className={inputClass} style={inputStyle} value={form.password} onChange={e => setForm({...form, password: e.target.value})} required={!editing} /></div>
+              <div>
+                <label className="text-sm font-medium">{editing ? 'Новый PIN (оставьте пустым, чтобы не менять)' : 'PIN-код (4 цифры) *'}</label>
+                <input
+                  type="password"
+                  inputMode="numeric"
+                  autoComplete="new-password"
+                  maxLength={4}
+                  pattern="\d{4}"
+                  title="4 цифры"
+                  className={inputClass}
+                  style={inputStyle}
+                  value={form.password}
+                  onChange={e => setForm({...form, password: e.target.value.replace(/\D/g, '').slice(0, 4)})}
+                  required={!editing}
+                />
+                {editing && <p className="text-xs text-muted-foreground mt-1">Новый PIN также снимает блокировку входа</p>}
+              </div>
               <div><label className="text-sm font-medium">ФИО *</label><input className={inputClass} style={inputStyle} value={form.fullName} onChange={e => setForm({...form, fullName: e.target.value})} required /></div>
               <div>
                 <label className="text-sm font-medium">Роль</label>

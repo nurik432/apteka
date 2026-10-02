@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, notifyError } from '@/lib/utils';
 import {
   AreaChart, Area, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -32,7 +32,7 @@ export default function AnalyticsPage() {
       setSalesByMonth(monthRes.data);
       setTopProducts(topRes.data);
       setStockByCategory(stockRes.data);
-    } catch { }
+    } catch (err) { notifyError(err, 'Не удалось загрузить аналитику'); }
     setLoading(false);
   };
 

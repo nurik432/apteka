@@ -12,19 +12,19 @@ export default function SettingsPage() {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      alert('Пароли не совпадают');
+    if (!/^\d{4}$/.test(newPassword)) {
+      alert('PIN должен состоять из 4 цифр');
       return;
     }
-    if (newPassword.length < 4) {
-      alert('Пароль должен быть не менее 4 символов');
+    if (newPassword !== confirmPassword) {
+      alert('PIN-коды не совпадают');
       return;
     }
 
     setPasswordLoading(true);
     try {
       await api.post('/auth/change-password', { currentPassword, newPassword });
-      alert('Пароль успешно изменён');
+      alert('PIN успешно изменён');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -34,13 +34,37 @@ export default function SettingsPage() {
     setPasswordLoading(false);
   };
 
-  const handleBackup = () => {
-    // Create a link to download the database file
-    alert('Для создания резервной копии скопируйте файл database/apteka.db в безопасное место.\n\nРасположение: <проект>/database/apteka.db');
+  const [backupLoading, setBackupLoading] = useState(false);
+
+  const handleBackup = async () => {
+    setBackupLoading(true);
+    try {
+      const res = await api.get('/export/backup', { responseType: 'blob' });
+      const fileName = /filename="?([^";]+)"?/.exec(res.headers['content-disposition'] || '')?.[1] || 'apteka-backup.db';
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement('a');
+      a.href = url; a.download = fileName; a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      alert('Не удалось создать резервную копию');
+    }
+    setBackupLoading(false);
   };
 
   const inputClass = "w-full h-10 px-3 rounded-lg text-sm";
   const inputStyle = { background: 'var(--color-muted)', color: 'var(--color-foreground)', border: '1px solid var(--color-border)' };
+  const pinInputProps = {
+    type: 'password',
+    inputMode: 'numeric' as const,
+    autoComplete: 'off',
+    maxLength: 4,
+    pattern: '\\d{4}',
+    title: '4 цифры',
+    required: true,
+    className: inputClass,
+    style: inputStyle,
+  };
+  const digitsOnly = (value: string) => value.replace(/\D/g, '').slice(0, 4);
 
   return (
     <div className="space-y-6">
@@ -57,26 +81,26 @@ export default function SettingsPage() {
               <Lock className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h2 className="font-semibold">Смена пароля</h2>
-              <p className="text-xs text-muted-foreground">Изменить пароль для {user?.username}</p>
+              <h2 className="font-semibold">Смена PIN-кода</h2>
+              <p className="text-xs text-muted-foreground">Изменить PIN для {user?.fullName}</p>
             </div>
           </div>
 
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Текущий пароль</label>
-              <input type="password" className={inputClass} style={inputStyle} value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required />
+              <label className="text-sm font-medium">Текущий PIN</label>
+              <input {...pinInputProps} value={currentPassword} onChange={e => setCurrentPassword(digitsOnly(e.target.value))} />
             </div>
             <div>
-              <label className="text-sm font-medium">Новый пароль</label>
-              <input type="password" className={inputClass} style={inputStyle} value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
+              <label className="text-sm font-medium">Новый PIN (4 цифры)</label>
+              <input {...pinInputProps} value={newPassword} onChange={e => setNewPassword(digitsOnly(e.target.value))} />
             </div>
             <div>
-              <label className="text-sm font-medium">Подтвердите пароль</label>
-              <input type="password" className={inputClass} style={inputStyle} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
+              <label className="text-sm font-medium">Повторите новый PIN</label>
+              <input {...pinInputProps} value={confirmPassword} onChange={e => setConfirmPassword(digitsOnly(e.target.value))} />
             </div>
             <button type="submit" disabled={passwordLoading} className="px-6 h-10 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50">
-              {passwordLoading ? 'Сохранение...' : 'Изменить пароль'}
+              {passwordLoading ? 'Сохранение...' : 'Изменить PIN'}
             </button>
           </form>
         </div>
@@ -94,13 +118,14 @@ export default function SettingsPage() {
           </div>
 
           <p className="text-sm text-muted-foreground mb-4">
-            Все данные хранятся в файле <code className="px-1.5 py-0.5 rounded bg-muted text-foreground text-xs">database/apteka.db</code>. 
-            Для создания резервной копии скопируйте этот файл в безопасное место.
+            Скачайте копию базы данных и храните её на флешке или в облаке.
+            Для восстановления замените файл <code className="px-1.5 py-0.5 rounded bg-muted text-foreground text-xs">database/apteka.db</code> скачанной
+            копией (переименовав её в <code className="px-1.5 py-0.5 rounded bg-muted text-foreground text-xs">apteka.db</code>) и перезапустите программу.
           </p>
 
-          <button onClick={handleBackup} className="flex items-center gap-2 px-4 h-10 rounded-xl text-sm font-medium hover:bg-muted transition-colors" style={{ border: '1px solid var(--color-border)' }}>
+          <button onClick={handleBackup} disabled={backupLoading} className="flex items-center gap-2 px-4 h-10 rounded-xl text-sm font-medium hover:bg-muted transition-colors disabled:opacity-50" style={{ border: '1px solid var(--color-border)' }}>
             <Download className="w-4 h-4" />
-            Информация о резервном копировании
+            {backupLoading ? 'Создание копии...' : 'Скачать резервную копию'}
           </button>
         </div>
 

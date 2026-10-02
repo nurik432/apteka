@@ -1,7 +1,30 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'apteka-secret-key-2024-local';
+// Секрет из окружения, иначе — сгенерированный при первом запуске и сохранённый рядом с БД.
+// Путь одинаков для src/ (tsx) и dist/ (node): оба на уровень ниже backend/.
+const SECRET_FILE = path.join(__dirname, '../../../database/.jwt-secret');
+
+function loadJwtSecret(): string {
+  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
+  if (fs.existsSync(SECRET_FILE)) {
+    const saved = fs.readFileSync(SECRET_FILE, 'utf8').trim();
+    if (saved) return saved;
+  }
+  const secret = crypto.randomBytes(48).toString('hex');
+  fs.mkdirSync(path.dirname(SECRET_FILE), { recursive: true });
+  fs.writeFileSync(SECRET_FILE, secret, { mode: 0o600 });
+  return secret;
+}
+
+const JWT_SECRET = loadJwtSecret();
+
+export function isValidPin(pin: unknown): pin is string {
+  return typeof pin === 'string' && /^\d{4}$/.test(pin);
+}
 
 export interface AuthRequest extends Request {
   user?: {

@@ -1,13 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Sun, Moon, LogOut, User, Pill } from 'lucide-react';
-
-const roleLabels: Record<string, string> = {
-  ADMIN: 'Администратор',
-  MANAGER: 'Руководитель',
-  PHARMACIST: 'Фармацевт',
-  STOREKEEPER: 'Кладовщик',
-};
+import { roleLabels } from '@/lib/utils';
 
 export default function Header() {
   const { user, logout } = useAuth();

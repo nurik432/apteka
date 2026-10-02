@@ -1,6 +1,6 @@
 import { Router, Response } from 'express';
 import prisma from '../prisma';
-import { AuthRequest, authMiddleware } from '../middleware/auth';
+import { AuthRequest, authMiddleware, roleGuard } from '../middleware/auth';
 import multer from 'multer';
 import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
@@ -313,6 +313,29 @@ router.get('/report-pdf', authMiddleware, async (req: AuthRequest, res: Response
   } catch (error) {
     console.error('Export PDF error:', error);
     res.status(500).json({ error: 'Ошибка при экспорте PDF' });
+  }
+});
+
+// GET /api/export/backup — резервная копия базы данных (SQLite)
+router.get('/backup', authMiddleware, roleGuard('ADMIN'), async (_req: AuthRequest, res: Response): Promise<void> => {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const now = new Date();
+  const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}`;
+  // Имя временного файла формирует сервер — пользовательский ввод в SQL не попадает
+  const tempFile = path.join(__dirname, '../../uploads/temp', `backup-${Date.now()}.db`);
+
+  try {
+    // VACUUM INTO даёт целостный снимок даже во время работы приложения
+    await prisma.$executeRawUnsafe(`VACUUM INTO '${tempFile.replace(/\\/g, '/')}'`);
+
+    res.download(tempFile, `apteka-backup-${stamp}.db`, (err) => {
+      if (err) console.error('Backup download error:', err);
+      fs.unlink(tempFile, () => {});
+    });
+  } catch (error) {
+    console.error('Backup error:', error);
+    fs.unlink(tempFile, () => {});
+    res.status(500).json({ error: 'Не удалось создать резервную копию' });
   }
 });
 

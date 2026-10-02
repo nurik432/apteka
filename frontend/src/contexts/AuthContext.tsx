@@ -11,7 +11,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (username: string, password: string) => Promise<void>;
+  login: (userId: number, pin: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
   isAuthenticated: boolean;
@@ -49,8 +49,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkAuth();
   }, [checkAuth]);
 
-  const login = async (username: string, password: string) => {
-    const response = await api.post('/auth/login', { username, password });
+  const login = async (userId: number, pin: string) => {
+    const response = await api.post('/auth/login', { userId, pin });
     const { token: newToken, user: userData } = response.data;
     
     localStorage.setItem('token', newToken);

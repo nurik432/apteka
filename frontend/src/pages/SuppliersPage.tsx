@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import api from '@/lib/api';
 import { Plus, Edit2, Trash2, X, Search, Truck, Phone, Mail, MapPin } from 'lucide-react';
-import { formatDateTime } from '@/lib/utils';
+import { formatDateTime, notifyError } from '@/lib/utils';
 
 interface Supplier {
   id: number;
@@ -29,7 +29,7 @@ export default function SuppliersPage() {
     try {
       const res = await api.get(`/suppliers?search=${encodeURIComponent(search)}`);
       setSuppliers(res.data);
-    } catch { }
+    } catch (err) { notifyError(err, 'Не удалось загрузить поставщиков'); }
     setLoading(false);
   };
 

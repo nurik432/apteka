@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '@/lib/api';
-import { formatCurrency, formatDateTime } from '@/lib/utils';
+import { formatCurrency, formatDateTime, notifyError } from '@/lib/utils';
 import { PackagePlus, PackageMinus, Undo2, History, ChevronLeft, ChevronRight, Search, Plus } from 'lucide-react';
 import ProductFormModal from '@/components/ProductFormModal';
 
@@ -66,7 +66,7 @@ export default function WarehousePage() {
       const res = await api.get(`/warehouse/movements?page=${page}&limit=20`);
       setMovements(res.data.data);
       setTotalPages(res.data.pagination.totalPages);
-    } catch { }
+    } catch (err) { notifyError(err, 'Не удалось загрузить историю движения'); }
     setLoading(false);
   }, [page]);
 

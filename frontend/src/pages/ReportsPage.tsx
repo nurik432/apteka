@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
-import { formatCurrency, formatDateTime } from '@/lib/utils';
+import { formatCurrency, formatDateTime, notifyError } from '@/lib/utils';
 import { Download, FileText, Calendar } from 'lucide-react';
 
 export default function ReportsPage() {
@@ -23,7 +23,7 @@ export default function ReportsPage() {
       
       const res = await api.get(`/reports/sales?${params}`);
       setReportData(res.data);
-    } catch { }
+    } catch (err) { notifyError(err, 'Не удалось загрузить отчёт'); }
     setLoading(false);
   };
 

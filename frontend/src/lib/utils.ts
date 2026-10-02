@@ -1,9 +1,26 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { toast } from "sonner"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+/** Показывает ошибку запроса уведомлением. 401 не показываем — api.ts уже ведёт на вход. */
+export function notifyError(err: unknown, fallback: string) {
+  const response = (err as { response?: { status?: number; data?: { error?: string } } })?.response;
+  if (response?.status === 401) return;
+  const message = response?.data?.error || fallback;
+  toast.error(message, { id: message }); // одинаковые ошибки не дублируются
+}
+
+export const roleLabels: Record<string, string> = {
+  ADMIN: 'Администратор',
+  MANAGER: 'Руководитель',
+  PHARMACIST: 'Фармацевт',
+  STOREKEEPER: 'Кладовщик',
+};
+
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('ru-RU', {
     style: 'decimal',

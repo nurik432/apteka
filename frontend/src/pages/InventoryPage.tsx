@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
+import { notifyError } from '@/lib/utils';
 import { ClipboardCheck, Save, AlertTriangle } from 'lucide-react';
 
 interface Product {
@@ -42,7 +43,7 @@ export default function InventoryPage() {
         actualStock: p.stock,
         diff: 0,
       })));
-    } catch { }
+    } catch (err) { notifyError(err, 'Не удалось загрузить товары'); }
     setLoading(false);
   };
 

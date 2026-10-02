@@ -4,6 +4,7 @@ node_modules/
 # Database
 database/*.db
 database/*.db-journal
+database/.jwt-secret
 
 # Build output
 frontend/dist/

@@ -7,7 +7,8 @@ async function main() {
   console.log('🌱 Начало заполнения базы данных...');
 
   // Создание администратора
-  const hashedPassword = await bcrypt.hash('admin123', 10);
+  // PIN администратора по умолчанию — смените после первого входа
+  const hashedPassword = await bcrypt.hash('1234', 10);
   
   const admin = await prisma.user.upsert({
     where: { username: 'admin' },

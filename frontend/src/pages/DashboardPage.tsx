@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, notifyError } from '@/lib/utils';
 import {
   TrendingUp, DollarSign, ShoppingCart, Package,
   AlertTriangle, BarChart3, ArrowUp, ArrowDown,
@@ -52,6 +52,7 @@ export default function DashboardPage() {
       setStockByCategory(stockRes.data);
     } catch (error) {
       console.error('Dashboard load error:', error);
+      notifyError(error, 'Не удалось загрузить данные главной страницы');
     } finally {
       setLoading(false);
     }

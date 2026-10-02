@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '@/lib/api';
-import { formatDate } from '@/lib/utils';
+import { formatDate, notifyError } from '@/lib/utils';
 import { AlertTriangle, AlertCircle, Clock, CheckCircle } from 'lucide-react';
 
 export default function ExpiryPage() {
@@ -15,7 +15,7 @@ export default function ExpiryPage() {
     try {
       const res = await api.get('/products/expiring');
       setData(res.data);
-    } catch { }
+    } catch (err) { notifyError(err, 'Не удалось загрузить сроки годности'); }
     setLoading(false);
   };
 

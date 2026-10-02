@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import prisma from '../prisma';
-import { AuthRequest, authMiddleware, roleGuard } from '../middleware/auth';
+import { AuthRequest, authMiddleware, roleGuard, isValidPin } from '../middleware/auth';
 
 const router = Router();
 
@@ -36,6 +36,11 @@ router.post('/', authMiddleware, roleGuard('ADMIN'), async (req: AuthRequest, re
       return;
     }
 
+    if (!isValidPin(password)) {
+      res.status(400).json({ error: 'PIN должен состоять из 4 цифр' });
+      return;
+    }
+
     const existing = await prisma.user.findUnique({ where: { username } });
     if (existing) {
       res.status(400).json({ error: 'Пользователь с таким логином уже существует' });
@@ -66,11 +71,21 @@ router.put('/:id', authMiddleware, roleGuard('ADMIN'), async (req: AuthRequest, 
     const id = parseInt(req.params.id as string);
     const { fullName, role, active, password } = req.body;
 
+    if (password && !isValidPin(password)) {
+      res.status(400).json({ error: 'PIN должен состоять из 4 цифр' });
+      return;
+    }
+
     const data: any = {};
     if (fullName !== undefined) data.fullName = fullName;
     if (role !== undefined) data.role = role;
     if (active !== undefined) data.active = active;
-    if (password) data.password = await bcrypt.hash(password, 10);
+    if (password) {
+      // Новый PIN от администратора заодно снимает блокировку
+      data.password = await bcrypt.hash(password, 10);
+      data.failedLogins = 0;
+      data.lockedUntil = null;
+    }
 
     const user = await prisma.user.update({
       where: { id },
