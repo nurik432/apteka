@@ -82,26 +82,26 @@ export default function DictionariesPage() {
   const dataList = tab === 'categories' ? categories : manufacturers;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Справочники</h1>
-          <p className="text-muted-foreground text-sm mt-1">Управление категориями и фирмами</p>
+          <h1 className="text-[22px] font-bold leading-tight">Справочники</h1>
+          <p className="text-muted-foreground text-[13px]">Управление категориями и фирмами</p>
         </div>
-        <button onClick={openCreate} className="flex items-center gap-2 px-4 h-10 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/25 transition-all">
+        <button onClick={openCreate} className="flex items-center gap-2 px-4 h-10 rounded-lg text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary-hover transition-colors">
           <Plus className="w-4 h-4" /> Добавить
         </button>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: 'var(--color-muted)' }}>
+      <div className="seg w-fit">
         {tabs.map(t => (
           <button
             key={t.key}
+            type="button"
             onClick={() => setTab(t.key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              tab === t.key ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'
-            }`}
+            aria-pressed={tab === t.key}
+            className="flex items-center gap-2"
           >
             <t.icon className="w-4 h-4" />
             {t.label}
@@ -110,7 +110,7 @@ export default function DictionariesPage() {
       </div>
 
       {/* List */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
+      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
         <table className="w-full text-sm">
           <thead>
             <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
@@ -121,9 +121,9 @@ export default function DictionariesPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">Загрузка...</td></tr>
+              <tr><td colSpan={3} className="px-4 py-5"><div className="space-y-3"><div className="skeleton w-2/3" /><div className="skeleton w-full" /><div className="skeleton w-4/5" /></div></td></tr>
             ) : dataList.length === 0 ? (
-              <tr><td colSpan={3} className="px-4 py-8 text-center text-muted-foreground">Нет данных</td></tr>
+              <tr><td colSpan={3}><div className="empty-state"><b>Список пуст</b><p>Добавьте первую запись кнопкой «Добавить».</p></div></td></tr>
             ) : dataList.map(item => (
               <tr key={item.id} className="table-row-hover" style={{ borderBottom: '1px solid var(--color-border)' }}>
                 <td className="px-4 py-3 font-medium">{item.name}</td>
@@ -142,7 +142,7 @@ export default function DictionariesPage() {
 
       {/* Form Modal */}
       {showForm && createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={() => setShowForm(false)}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 animate-fadeIn" onClick={() => setShowForm(false)}>
           <div className="w-full max-w-md bg-card rounded-2xl p-6 animate-scaleIn shadow-xl" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }} onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-bold">{editingId ? 'Редактировать' : 'Добавить'}</h2>
@@ -157,12 +157,12 @@ export default function DictionariesPage() {
                   value={formName}
                   onChange={e => setFormName(e.target.value)}
                   className="w-full h-10 px-3 mt-1 rounded-lg text-sm"
-                  style={{ background: 'var(--color-muted)', color: 'var(--color-foreground)', border: '1px solid var(--color-border)' }}
+                  style={{ background: 'var(--color-card)', color: 'var(--color-foreground)', border: '1px solid var(--color-border-strong)' }}
                 />
               </div>
               <div className="flex justify-end gap-3 pt-4">
                 <button type="button" onClick={() => setShowForm(false)} className="px-4 h-10 rounded-xl text-sm font-medium hover:bg-muted" style={{ border: '1px solid var(--color-border)' }}>Отмена</button>
-                <button type="submit" className="px-6 h-10 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25">Сохранить</button>
+                <button type="submit" className="px-6 h-10 rounded-lg text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary-hover">Сохранить</button>
               </div>
             </form>
           </div>

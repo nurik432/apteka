@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import { X, Check, ShoppingBag } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
 import Numpad, { type NumpadKey } from './Numpad';
+import PosDialog from './PosDialog';
 
 interface CustomItemModalProps {
   onConfirm: (name: string, amount: number) => void;
   onClose: () => void;
 }
+
+const KEYS: NumpadKey[] = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'BS'];
 
 function CustomItemModal({ onConfirm, onClose }: CustomItemModalProps) {
   const [name, setName] = useState('');
@@ -65,99 +65,54 @@ function CustomItemModal({ onConfirm, onClose }: CustomItemModalProps) {
     return () => window.removeEventListener('keydown', handler);
   }, [handleNumpad, handleConfirm, onClose, activeField, amount]);
 
-  const numpadButtons: NumpadKey[] = [
-    '1', '2', '3',
-    '4', '5', '6',
-    '7', '8', '9',
-    '.', '0', 'BS',
-  ];
-
-  return createPortal(
-    <div
-      className="pos-modal-overlay"
-      data-pos-modal
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="pos-custom-item-modal animate-scaleIn">
-        {/* Header */}
-        <div className="pos-custom-item-header">
-          <div className="pos-custom-item-header-icon">
-            <ShoppingBag className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="pos-custom-item-title">Разный товар</h3>
-            <p className="pos-custom-item-subtitle">Добавить произвольную позицию</p>
-          </div>
-          <button className="pos-modal-close-btn" onClick={onClose}>
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Name field */}
-        <div className="pos-custom-item-field">
-          <label className="pos-custom-item-label">Название (необязательно)</label>
-          <input
-            type="text"
-            className="pos-custom-item-input"
-            placeholder="Разный товар"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onFocus={() => setActiveField('name')}
-            autoFocus={false}
-          />
-        </div>
-
-        {/* Amount display */}
-        <div
-          className={`pos-custom-item-amount ${activeField === 'amount' ? 'pos-custom-item-amount--active' : ''}`}
-          onClick={() => setActiveField('amount')}
-        >
-          <span className="pos-custom-item-amount-label">Сумма</span>
-          <span className="pos-custom-item-amount-value">
-            {amountInput ? formatCurrency(amount) : '0 смн.'}
-          </span>
-        </div>
-
-        {/* Numpad */}
-        <Numpad
-          variant="payment"
-          keys={numpadButtons}
-          onKey={btn => {
-            setActiveField('amount');
-            handleNumpad(btn);
-          }}
-        />
-
-        {/* Clear button */}
-        <button
-          className="pos-calculator-backspace"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            setAmountInput('');
-          }}
-        >
-          Очистить
-        </button>
-
-        {/* Action buttons */}
-        <div className="pos-calculator-actions">
-          <button className="pos-btn pos-btn--ghost" onClick={onClose}>
-            Отмена
-          </button>
-          <button
-            className="pos-btn pos-btn--primary"
-            onClick={handleConfirm}
-            disabled={amount <= 0}
-          >
-            <Check className="w-5 h-5" />
+  return (
+    <PosDialog
+      title="Разный товар"
+      subtitle="Позиция, которой нет в базе"
+      width={380}
+      onClose={onClose}
+      footer={
+        <>
+          <button type="button" className="btn btn-secondary btn-lg" onClick={onClose}>Отмена</button>
+          <button type="button" className="btn btn-primary btn-lg" onClick={handleConfirm} disabled={amount <= 0}>
             Добавить
           </button>
-        </div>
+        </>
+      }
+    >
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="pos-custom-name" className="text-[13px] font-medium">Название (необязательно)</label>
+        <input
+          id="pos-custom-name"
+          type="text"
+          className="h-10 px-3 rounded-lg text-sm bg-card border border-border-strong"
+          placeholder="Например, пакет"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          onFocus={() => setActiveField('name')}
+        />
       </div>
-    </div>,
-    document.body
+
+      <div className="flex flex-col gap-1.5">
+        <span className="text-[13px] font-medium">Сумма</span>
+        <button
+          type="button"
+          className={`pos-display ${activeField === 'amount' ? 'pos-display--active' : ''}`}
+          onClick={() => setActiveField('amount')}
+        >
+          {amountInput || '0'}
+          <small>смн.</small>
+        </button>
+      </div>
+
+      <Numpad
+        keys={KEYS}
+        onKey={(btn) => {
+          setActiveField('amount');
+          handleNumpad(btn);
+        }}
+      />
+    </PosDialog>
   );
 }
 

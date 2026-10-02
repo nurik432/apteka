@@ -62,6 +62,7 @@ export default function AnalyticsPage() {
   const [[from, to], setRange] = useState<[string, string]>(presets[1].range());
   const [salesByDay, setSalesByDay] = useState<DayStat[]>([]);
   const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
+  const [prevDays, setPrevDays] = useState<DayStat[]>([]);
   const [loading, setLoading] = useState(true);
   const today = toDayKey(new Date());
   const rangeError = from && to && from > to ? 'Дата «с» позже даты «по»' : '';
@@ -72,23 +73,38 @@ export default function AnalyticsPage() {
       setLoading(true);
       try {
         const params = `from=${from}&to=${to}`;
-        const [dayRes, topRes] = await Promise.all([
+        // Предыдущий период той же длины — для сравнения в показателях
+        const [fy, fm, fd] = from.split('-').map(Number);
+        const [ty, tm, td] = to.split('-').map(Number);
+        const days = Math.round((new Date(ty, tm - 1, td).getTime() - new Date(fy, fm - 1, fd).getTime()) / 86400000) + 1;
+        const prevParams = `from=${toDayKey(new Date(fy, fm - 1, fd - days))}&to=${toDayKey(new Date(fy, fm - 1, fd - 1))}`;
+        const [dayRes, topRes, prevRes] = await Promise.all([
           api.get<DayStat[]>(`/analytics/sales-by-day?${params}`),
           api.get<TopProduct[]>(`/analytics/top-products?${params}`),
+          api.get<DayStat[]>(`/analytics/sales-by-day?${prevParams}`),
         ]);
         setSalesByDay(dayRes.data);
         setTopProducts(topRes.data);
+        setPrevDays(prevRes.data);
       } catch (err) { notifyError(err, 'Не удалось загрузить аналитику'); }
       setLoading(false);
     };
     load();
   }, [from, to, rangeError]);
 
-  const totals = salesByDay.reduce(
+  const sum = (days: DayStat[]) => days.reduce(
     (acc, d) => ({ revenue: acc.revenue + d.revenue, profit: acc.profit + d.profit, checks: acc.checks + d.checks }),
     { revenue: 0, profit: 0, checks: 0 }
   );
+  const totals = sum(salesByDay);
+  const prev = sum(prevDays);
   const avgCheck = totals.checks ? totals.revenue / totals.checks : 0;
+  const prevAvgCheck = prev.checks ? prev.revenue / prev.checks : 0;
+  const delta = (now: number, before: number) => {
+    if (before <= 0) return { text: 'В прошлом периоде продаж не было', tone: 'text-muted-foreground' };
+    const pct = Math.round(((now - before) / before) * 100);
+    return { text: `${pct >= 0 ? '+' : '−'}${Math.abs(pct)} % к прошлому периоду`, tone: pct >= 0 ? 'text-success' : 'text-destructive' };
+  };
   const byMonth = salesByDay.length > MAX_DAILY_POINTS;
   const chartData = byMonth ? groupByMonth(salesByDay) : salesByDay;
   const unitLabel = byMonth ? 'по месяцам' : 'по дням';
@@ -101,27 +117,20 @@ export default function AnalyticsPage() {
     fontSize: '12px',
   };
   const cardStyle = { background: 'var(--color-card)', border: '1px solid var(--color-border)' };
-  const inputStyle = { background: 'var(--color-muted)', color: 'var(--color-foreground)', border: '1px solid var(--color-border)' };
+  const inputStyle = { background: 'var(--color-card)', color: 'var(--color-foreground)', border: '1px solid var(--color-border-strong)' };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">Аналитика</h1>
-          <p className="text-muted-foreground text-sm mt-1">Показатели за выбранный период</p>
+          <h1 className="text-[22px] font-bold leading-tight">Аналитика</h1>
+          <p className="text-muted-foreground text-[13px]">Показатели за выбранный период</p>
         </div>
 
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <div className="flex flex-wrap gap-1 p-1 rounded-xl w-fit" style={{ background: 'var(--color-muted)' }}>
+          <div className="seg flex-wrap w-fit">
             {presets.map(p => (
-              <button
-                key={p.label}
-                type="button"
-                onClick={() => setRange(p.range())}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  activePreset === p.label ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow' : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
+              <button key={p.label} type="button" onClick={() => setRange(p.range())} aria-pressed={activePreset === p.label}>
                 {p.label}
               </button>
             ))}
@@ -137,54 +146,55 @@ export default function AnalyticsPage() {
       </div>
 
       {rangeError && (
-        <div className="px-4 py-3 rounded-xl text-sm bg-destructive/10 text-destructive border border-destructive/20">{rangeError}</div>
+        <div className="px-4 py-3 rounded-xl text-sm bg-destructive-soft text-destructive">{rangeError}</div>
       )}
 
       {/* KPI */}
-      <div className={`grid grid-cols-2 lg:grid-cols-4 gap-4 transition-opacity ${loading ? 'opacity-50' : ''}`}>
+      <div className={`grid grid-cols-2 lg:grid-cols-4 gap-3 transition-opacity ${loading ? 'opacity-50' : ''}`}>
         {[
-          { label: 'Выручка', value: formatCurrency(totals.revenue) },
-          { label: 'Прибыль', value: formatCurrency(totals.profit) },
-          { label: 'Чеков', value: String(totals.checks) },
-          { label: 'Средний чек', value: formatCurrency(avgCheck) },
+          { label: 'Выручка', value: formatCurrency(totals.revenue), d: delta(totals.revenue, prev.revenue) },
+          { label: 'Прибыль', value: formatCurrency(totals.profit), d: delta(totals.profit, prev.profit) },
+          { label: 'Чеков', value: String(totals.checks), d: delta(totals.checks, prev.checks) },
+          { label: 'Средний чек', value: formatCurrency(avgCheck), d: delta(avgCheck, prevAvgCheck) },
         ].map(kpi => (
-          <div key={kpi.label} className="rounded-2xl p-5" style={cardStyle}>
+          <div key={kpi.label} className="rounded-xl bg-card border px-4 py-3.5">
             <p className="text-xs text-muted-foreground">{kpi.label}</p>
-            <p className="text-xl font-bold mt-1">{kpi.value}</p>
+            <p className="text-2xl font-bold num tracking-tight">{kpi.value}</p>
+            <p className={`text-xs num ${kpi.d.tone}`}>{kpi.d.text}</p>
           </div>
         ))}
       </div>
 
       <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 transition-opacity ${loading ? 'opacity-50' : ''}`}>
         {/* Revenue & profit by day */}
-        <div className="rounded-2xl p-6" style={cardStyle}>
+        <div className="rounded-xl p-6" style={cardStyle}>
           <h3 className="text-base font-semibold mb-4">Выручка и прибыль {unitLabel}</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="areaRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                    <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="areaProfit" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                    <stop offset="5%" stopColor="var(--color-info)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="var(--color-info)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                 <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--color-muted-foreground)' }} tickFormatter={formatDay} minTickGap={16} />
                 <YAxis tick={{ fontSize: 10, fill: 'var(--color-muted-foreground)' }} />
                 <Tooltip contentStyle={chartTooltipStyle} labelFormatter={formatDay} formatter={(v: number, name: string) => [formatCurrency(v), name === 'revenue' ? 'Выручка' : 'Прибыль']} />
-                <Area type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2} fill="url(#areaRevenue)" />
-                <Area type="monotone" dataKey="profit" stroke="#10b981" strokeWidth={2} fill="url(#areaProfit)" />
+                <Area type="monotone" dataKey="revenue" stroke="var(--color-primary)" strokeWidth={2} fill="url(#areaRevenue)" />
+                <Area type="monotone" dataKey="profit" stroke="var(--color-info)" strokeWidth={2} fill="url(#areaProfit)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Checks by day */}
-        <div className="rounded-2xl p-6" style={cardStyle}>
+        <div className="rounded-xl p-6" style={cardStyle}>
           <h3 className="text-base font-semibold mb-4">Количество чеков {unitLabel}</h3>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -193,7 +203,7 @@ export default function AnalyticsPage() {
                 <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--color-muted-foreground)' }} tickFormatter={formatDay} minTickGap={16} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: 'var(--color-muted-foreground)' }} />
                 <Tooltip contentStyle={chartTooltipStyle} labelFormatter={formatDay} formatter={(v: number) => [v, 'Чеков']} />
-                <Bar dataKey="checks" fill="#a855f7" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="checks" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -201,7 +211,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Top Products Table */}
-      <div className={`rounded-2xl p-6 transition-opacity ${loading ? 'opacity-50' : ''}`} style={cardStyle}>
+      <div className={`rounded-xl p-6 transition-opacity ${loading ? 'opacity-50' : ''}`} style={cardStyle}>
         <h3 className="text-base font-semibold mb-4">Топ-10 товаров за период</h3>
         {topProducts.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8">Нет продаж за выбранный период</p>
@@ -219,7 +229,7 @@ export default function AnalyticsPage() {
               <tbody>
                 {topProducts.map((p, i) => (
                   <tr key={p.productId} className="table-row-hover" style={{ borderBottom: '1px solid var(--color-border)' }}>
-                    <td className="px-4 py-2 whitespace-nowrap"><span className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs text-white font-bold">{i+1}</span></td>
+                    <td className="px-4 py-2 whitespace-nowrap"><span className="w-6 h-6 rounded-lg bg-primary-soft text-primary-text flex items-center justify-center text-xs font-bold">{i+1}</span></td>
                     <td className="px-4 py-2 font-medium min-w-[200px] whitespace-normal break-words">{p.name}</td>
                     <td className="px-4 py-2 text-right whitespace-nowrap">{p.quantity} ед.</td>
                     <td className="px-4 py-2 text-right font-semibold text-primary whitespace-nowrap">{formatCurrency(p.revenue)}</td>

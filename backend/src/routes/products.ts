@@ -37,11 +37,17 @@ router.get('/', authMiddleware, async (req: AuthRequest, res: Response): Promise
     };
 
     if (search) {
+      // SQLite сравнивает без учёта регистра только латиницу, поэтому для кириллицы
+      // ищем сразу в нескольких написаниях: как введено, строчными, прописными, с заглавной
+      const lower = search.toLowerCase();
+      const variants = [...new Set([search, lower, search.toUpperCase(), lower.charAt(0).toUpperCase() + lower.slice(1)])];
       where.OR = [
-        { name: { contains: search } },
+        ...variants.flatMap((v) => [
+          { name: { contains: v } },
+          { manufacturer: { name: { contains: v } } },
+        ]),
         { barcode: { contains: search } },
         { sku: { contains: search } },
-        { manufacturer: { contains: search } },
       ];
     }
 

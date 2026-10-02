@@ -24,22 +24,22 @@ export default function ExpiryPage() {
   }
 
   const sections = [
-    { title: 'Просроченные', icon: AlertCircle, items: data.expired, color: 'text-red-500', bgColor: 'bg-red-500/10', borderColor: 'border-red-500/20' },
-    { title: 'Критично (< 30 дней)', icon: AlertTriangle, items: data.critical, color: 'text-red-400', bgColor: 'bg-red-400/10', borderColor: 'border-red-400/20' },
-    { title: 'Внимание (< 90 дней)', icon: Clock, items: data.warning, color: 'text-amber-500', bgColor: 'bg-amber-500/10', borderColor: 'border-amber-500/20' },
+    { title: 'Просроченные', icon: AlertCircle, items: data.expired, color: 'text-destructive', bgColor: 'bg-destructive-soft', borderColor: 'border-red-500/20' },
+    { title: 'Критично (< 30 дней)', icon: AlertTriangle, items: data.critical, color: 'text-destructive', bgColor: 'bg-destructive-soft', borderColor: 'border-red-400/20' },
+    { title: 'Внимание (< 90 дней)', icon: Clock, items: data.warning, color: 'text-warning', bgColor: 'bg-warning-soft', borderColor: 'border-amber-500/20' },
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold">Контроль сроков годности</h1>
-        <p className="text-muted-foreground text-sm mt-1">Мониторинг сроков годности препаратов</p>
+        <h1 className="text-[22px] font-bold leading-tight">Контроль сроков годности</h1>
+        <p className="text-muted-foreground text-[13px]">Мониторинг сроков годности препаратов</p>
       </div>
 
       {/* Summary */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {sections.map((section, i) => (
-          <div key={i} className={`rounded-2xl p-5 card-hover ${section.bgColor} border ${section.borderColor}`}>
+          <div key={i} className={`rounded-xl p-5 card-hover ${section.bgColor} border ${section.borderColor}`}>
             <div className="flex items-center gap-3">
               <section.icon className={`w-8 h-8 ${section.color}`} />
               <div>
@@ -54,7 +54,7 @@ export default function ExpiryPage() {
       {/* Lists */}
       {sections.map((section, i) => (
         section.items.length > 0 && (
-          <div key={i} className="rounded-2xl overflow-hidden" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
+          <div key={i} className="rounded-xl overflow-hidden" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
             <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid var(--color-border)' }}>
               <section.icon className={`w-5 h-5 ${section.color}`} />
               <h3 className="font-semibold">{section.title} ({section.items.length})</h3>
@@ -91,7 +91,7 @@ export default function ExpiryPage() {
 
       {data.expired.length === 0 && data.critical.length === 0 && data.warning.length === 0 && (
         <div className="text-center py-12">
-          <CheckCircle className="w-16 h-16 text-emerald-500/30 mx-auto mb-4" />
+          <CheckCircle className="w-16 h-16 text-success/40 mx-auto mb-4" />
           <p className="text-muted-foreground">Все товары в пределах срока годности</p>
         </div>
       )}

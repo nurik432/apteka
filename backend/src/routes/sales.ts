@@ -49,7 +49,12 @@ router.post('/', authMiddleware, async (req: AuthRequest, res: Response): Promis
         let purchasePrice = 0;
         if (item.productId) {
           const product = await tx.product.findUnique({ where: { id: item.productId } });
-          if (product) purchasePrice = product.purchasePrice;
+          // При поштучной продаже quantity — в таблетках, поэтому себестоимость тоже за одну таблетку
+          if (product) {
+            purchasePrice = product.piecesPerPack > 0
+              ? product.purchasePrice / product.piecesPerPack
+              : product.purchasePrice;
+          }
         }
         
         const itemDiscount = item.discount || 0;

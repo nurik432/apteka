@@ -1,17 +1,18 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { CreditCard } from 'lucide-react';
 import api from '@/lib/api';
-import { formatCurrency, notifyError } from '@/lib/utils';
+import { formatCurrency, notifyError, getExpiryStatus, getExpiryBadgeClass, getExpiryLabel } from '@/lib/utils';
 import { useBarcodeScanner } from './hooks/useBarcodeScanner';
 import { useHotkeys } from './hooks/useHotkeys';
 import BarcodeInput from './components/BarcodeInput';
-import CategoryPanel from './components/CategoryPanel';
 import ReceiptTable from './components/ReceiptTable';
-import ProductGrid from './components/ProductGrid';
+import ProductSearchPanel from './components/ProductSearchPanel';
+import HeldReceiptsModal from './components/HeldReceiptsModal';
 import QuickActions from './components/QuickActions';
 import CalculatorModal from './components/CalculatorModal';
 import PaymentModal from './components/PaymentModal';
 import ReceiptModal from './components/ReceiptModal';
+import DiscountModal from './components/DiscountModal';
 import TabletQtyModal from './components/TabletQtyModal';
 import CustomItemModal from './components/CustomItemModal';
 import type { CartItem, Product, HeldReceipt } from './types';
@@ -33,6 +34,7 @@ export default function POSPage() {
   const [showPayment, setShowPayment] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
   const [lastSale, setLastSale] = useState<any>(null);
+  const [lastChange, setLastChange] = useState(0);
   const [calculatorItem, setCalculatorItem] = useState<CartItem | null>(null);
   const [showDiscountModal, setShowDiscountModal] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -45,20 +47,25 @@ export default function POSPage() {
 
   // Held receipts
   const [heldReceipts, setHeldReceipts] = useState<HeldReceipt[]>([]);
+  const [showHeld, setShowHeld] = useState(false);
+
+  // Product search panel (F4)
+  const [showSearch, setShowSearch] = useState(false);
 
   // Refs
   const barcodeRef = useRef<HTMLInputElement>(null);
-  const searchRef = useRef<HTMLInputElement>(null);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // ─── Barcode scanner auto-focus ────────────────────────────
-  const hasModal = showPayment || showReceipt || !!calculatorItem || showDiscountModal || !!tabletProduct || showCustomItemModal;
+  // Панель поиска держит фокус в своём поле, поэтому на время её работы сканер и горячие клавиши отключены
+  const hasModal = showPayment || showReceipt || !!calculatorItem || showDiscountModal || !!tabletProduct || showCustomItemModal || showHeld || showSearch;
   const { refocusBarcode } = useBarcodeScanner(barcodeRef, { disabled: hasModal });
 
   // ─── Derived values ────────────────────────────────────────
   const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const itemDiscounts = cart.reduce((sum, item) => sum + item.discount, 0);
   const total = Math.max(0, subtotal - itemDiscounts - totalDiscount);
+  const selectedItem = cart.find((item) => item.id === selectedItemId);
 
   // ─── Load products by category or search ───────────────────
   const loadProducts = useCallback(async (categoryId: number | null, search: string) => {
@@ -71,7 +78,7 @@ export default function POSPage() {
       const res = await api.get(`/products?${params.toString()}`);
       setProducts(res.data.data);
     } catch (e) {
-      console.error('Failed to load products:', e);
+      notifyError(e, 'Не удалось загрузить товары');
     } finally {
       setProductsLoading(false);
     }
@@ -133,6 +140,7 @@ export default function POSPage() {
           discount: 0,
           unit: product.unit || 'шт',
           piecesPerPack: 0,
+          expiryDate: product.expiryDate,
         },
       ];
     });
@@ -159,6 +167,7 @@ export default function POSPage() {
         discount: 0,
         unit: 'шт',
         piecesPerPack: piecesPerPack,
+        expiryDate: product.expiryDate,
       },
     ]);
     setSelectedItemId(cartItemId);
@@ -252,6 +261,34 @@ export default function POSPage() {
     clearCart();
   }, [cart, totalDiscount, clearCart]);
 
+  // Вернуть отложенный чек в работу; текущий непустой чек при этом откладывается
+  const restoreReceipt = useCallback((receipt: HeldReceipt) => {
+    setHeldReceipts((prev) => {
+      const rest = prev.filter((r) => r.id !== receipt.id);
+      if (cart.length === 0) return rest;
+      const time = new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      return [...rest, { id: Date.now().toString(), items: [...cart], totalDiscount, createdAt: new Date(), label: `Чек от ${time}` }];
+    });
+    setCart(receipt.items);
+    setTotalDiscount(receipt.totalDiscount);
+    setSelectedItemId(receipt.items[0]?.id ?? null);
+    setShowHeld(false);
+  }, [cart, totalDiscount]);
+
+  // ─── Product search panel ─────────────────────────────────
+  const closeSearch = useCallback(() => {
+    setShowSearch(false);
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    setSearchQuery('');
+    setSelectedCategoryId(null);
+    loadProducts(null, '');
+  }, [loadProducts]);
+
+  const addFromSearch = useCallback((product: Product) => {
+    closeSearch();
+    addToCart(product);
+  }, [closeSearch, addToCart]);
+
   // ─── Payment ──────────────────────────────────────────────
   const handlePayment = useCallback(
     async (cashAmount: number, cardAmount: number) => {
@@ -272,6 +309,7 @@ export default function POSPage() {
           cardAmount,
         });
         setLastSale(res.data);
+        setLastChange(Math.max(0, cashAmount + cardAmount - total));
         setShowPayment(false);
         setShowReceipt(true);
         clearCart();
@@ -281,7 +319,7 @@ export default function POSPage() {
         setLoading(false);
       }
     },
-    [cart, totalDiscount, clearCart]
+    [cart, totalDiscount, total, clearCart]
   );
 
   const handleReceiptClose = useCallback(() => {
@@ -298,7 +336,7 @@ export default function POSPage() {
     onClearCart: () => {
       if (cart.length > 0 && confirm('Очистить чек?')) clearCart();
     },
-    onSearchFocus: () => searchRef.current?.focus(),
+    onSearchFocus: () => setShowSearch(true),
     onDeleteItem: () => {
       if (selectedItemId) removeFromCart(selectedItemId);
     },
@@ -311,13 +349,8 @@ export default function POSPage() {
     disabled: hasModal,
   });
 
-  // ─── Discount modal (simple prompt for now) ───────────────
-  const handleDiscountClick = useCallback(() => {
-    const val = prompt('Скидка на чек (смн.):', String(totalDiscount));
-    if (val !== null) {
-      setTotalDiscount(parseFloat(val) || 0);
-    }
-  }, [totalDiscount]);
+  // ─── Discount modal ───────────────────────────────────────
+  const handleDiscountClick = useCallback(() => setShowDiscountModal(true), []);
 
   // ─── Return (placeholder) ─────────────────────────────────
   const handleReturn = useCallback(() => {
@@ -327,26 +360,14 @@ export default function POSPage() {
   // ─── Render ───────────────────────────────────────────────
   return (
     <div className="pos-layout">
-      {/* Left Panel — Categories */}
-      <CategoryPanel
-        selectedCategoryId={selectedCategoryId}
-        onSelectCategory={setSelectedCategoryId}
-        searchQuery={searchQuery}
-        onSearchChange={handleSearchChange}
-        refocusBarcode={refocusBarcode}
-        searchRef={searchRef}
-      />
-
-      {/* Center — Main area */}
-      <div className="pos-center">
-        {/* Barcode input */}
+      {/* Левая часть — штрихкод и чек */}
+      <div className="pos-main">
         <BarcodeInput
           ref={barcodeRef}
           onScan={handleBarcodeScan}
           refocusBarcode={refocusBarcode}
         />
 
-        {/* Receipt table */}
         <div className="pos-receipt-area">
           <ReceiptTable
             cart={cart}
@@ -360,62 +381,110 @@ export default function POSPage() {
           />
         </div>
 
-        {/* Footer — totals & payment */}
-        <div className="pos-center-footer">
-          <div className="pos-totals">
-            <div className="pos-totals-row">
+        <div className="pos-hints">
+          <span className="pos-hints-count">Позиций в чеке: {cart.length}</span>
+          <span><kbd>+</kbd> <kbd>−</kbd> количество</span>
+          <span><kbd>Del</kbd> удалить позицию</span>
+          <span>Двойной клик — ввести количество</span>
+        </div>
+      </div>
+
+      {/* Правая колонка — сумма, оплата, действия */}
+      <aside className="pos-side">
+        <div>
+          <div className="pos-total-label">К оплате</div>
+          <div className="pos-total-value">
+            {formatCurrency(total).replace(' смн.', '')} <small>смн.</small>
+          </div>
+          <div className="pos-total-rows">
+            <div>
               <span>Подитог</span>
               <span>{formatCurrency(subtotal)}</span>
             </div>
             {(itemDiscounts + totalDiscount) > 0 && (
-              <div className="pos-totals-row pos-totals-row--discount">
+              <div className="pos-total-discount">
                 <span>Скидка</span>
-                <span>-{formatCurrency(itemDiscounts + totalDiscount)}</span>
+                <span>−{formatCurrency(itemDiscounts + totalDiscount)}</span>
               </div>
             )}
-            <div className="pos-totals-row pos-totals-row--grand">
-              <span>ИТОГО</span>
-              <span>{formatCurrency(total)}</span>
+          </div>
+        </div>
+
+        <button
+          className="pos-pay"
+          disabled={cart.length === 0}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            setShowPayment(true);
+          }}
+          id="pos-pay-btn"
+        >
+          <CreditCard className="w-[26px] h-[26px]" />
+          <span>Оплата</span>
+          <kbd>F2</kbd>
+        </button>
+
+        <QuickActions
+          onSearch={() => setShowSearch(true)}
+          onClearCart={() => { if (cart.length > 0 && confirm('Очистить чек?')) clearCart(); }}
+          onReturn={handleReturn}
+          onDiscount={handleDiscountClick}
+          onHoldReceipt={holdReceipt}
+          onShowHeld={() => setShowHeld(true)}
+          onCustomItem={() => setShowCustomItemModal(true)}
+          cartLength={cart.length}
+          heldReceiptsCount={heldReceipts.length}
+          refocusBarcode={refocusBarcode}
+        />
+
+        {selectedItem && !selectedItem.isCustom && (
+          <div className="pos-selinfo">
+            <span className="pos-selinfo-name">{selectedItem.name}</span>
+            <div className="pos-selinfo-row">
+              <span>Остаток</span>
+              <span>{selectedItem.stock} {selectedItem.piecesPerPack > 0 ? 'шт' : selectedItem.unit || 'шт'}</span>
+            </div>
+            <div className="pos-selinfo-row">
+              <span>Срок годности</span>
+              <span>
+                {selectedItem.expiryDate ? (
+                  <>
+                    до {new Date(selectedItem.expiryDate).toLocaleDateString('ru-RU', { month: '2-digit', year: 'numeric' })}
+                    <span className={`badge ${getExpiryBadgeClass(getExpiryStatus(selectedItem.expiryDate))}`}>
+                      {getExpiryLabel(getExpiryStatus(selectedItem.expiryDate))}
+                    </span>
+                  </>
+                ) : 'не указан'}
+              </span>
+            </div>
+            <div className="pos-selinfo-row">
+              <span>Цена</span>
+              <span>{formatCurrency(selectedItem.price)}</span>
             </div>
           </div>
+        )}
+      </aside>
 
-          <button
-            className="pos-btn pos-btn--pay pos-btn--pay-main"
-            disabled={cart.length === 0}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              setShowPayment(true);
-            }}
-            id="pos-pay-btn"
-          >
-            <CreditCard className="w-6 h-6" />
-            <span>Оплата</span>
-            <kbd>F2</kbd>
-          </button>
-        </div>
+      {showSearch && (
+        <ProductSearchPanel
+          products={products}
+          loading={productsLoading}
+          selectedCategoryId={selectedCategoryId}
+          onSelectCategory={setSelectedCategoryId}
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchChange}
+          onAddProduct={addFromSearch}
+          onClose={closeSearch}
+        />
+      )}
 
-        {/* Bottom — Product grid */}
-        <div className="pos-bottom-panel">
-          <ProductGrid
-            products={products}
-            loading={productsLoading}
-            onAddProduct={addToCart}
-            refocusBarcode={refocusBarcode}
-          />
-        </div>
-      </div>
-
-      {/* Right Panel — Quick Actions */}
-      <QuickActions
-        onClearCart={() => { if (cart.length > 0 && confirm('Очистить чек?')) clearCart(); }}
-        onReturn={handleReturn}
-        onDiscount={handleDiscountClick}
-        onHoldReceipt={holdReceipt}
-        onCustomItem={() => setShowCustomItemModal(true)}
-        cartLength={cart.length}
-        heldReceiptsCount={heldReceipts.length}
-        refocusBarcode={refocusBarcode}
-      />
+      {showHeld && (
+        <HeldReceiptsModal
+          receipts={heldReceipts}
+          onRestore={restoreReceipt}
+          onClose={() => setShowHeld(false)}
+        />
+      )}
 
       {/* ─── Modals ──────────────────────────────────────── */}
       {calculatorItem && (
@@ -457,6 +526,7 @@ export default function POSPage() {
       {showPayment && (
         <PaymentModal
           total={total}
+          itemsCount={cart.length}
           onConfirm={handlePayment}
           onClose={() => {
             setShowPayment(false);
@@ -466,8 +536,20 @@ export default function POSPage() {
         />
       )}
 
+      {showDiscountModal && (
+        <DiscountModal
+          subtotal={subtotal - itemDiscounts}
+          current={totalDiscount}
+          onConfirm={(value) => {
+            setTotalDiscount(value);
+            setShowDiscountModal(false);
+          }}
+          onClose={() => setShowDiscountModal(false)}
+        />
+      )}
+
       {showReceipt && lastSale && (
-        <ReceiptModal sale={lastSale} onClose={handleReceiptClose} />
+        <ReceiptModal sale={lastSale} change={lastChange} onClose={handleReceiptClose} />
       )}
     </div>
   );

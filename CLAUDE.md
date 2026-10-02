@@ -25,7 +25,8 @@ Apteka: offline pharmacy inventory and POS system (products, warehouse, sales, o
 ## Conventions
 - Roles: ADMIN, MANAGER, PHARMACIST (default), STOREKEEPER; backend uses `roleGuard`; frontend page access lives only in `lib/access.ts` (`pageRoles`), used by both App.tsx routes and the Navbar menu
 - UI feedback: `toast` (sonner) / `notifyError`, never `alert()`; keep native `confirm()` for destructive actions
-- POS numpads use `pages/pos/components/Numpad.tsx` (onMouseDown + preventDefault keeps focus in the modal input)
+- Design: colours only via tokens in `frontend/src/index.css` `@theme` (`bg-primary`, `bg-primary-soft`, `text-primary-text`, `status-green/yellow/red`, `*-soft`); no gradients, raw palette classes (`text-red-500`) or emoji icons; shared classes `.btn`, `.badge`, `.seg`; light theme is the default
+- POS dialogs are built from `pages/pos/components/PosDialog.tsx` + `Numpad.tsx` (onMouseDown + preventDefault keeps focus); `data-pos-modal` disables POS hotkeys while a dialog is open
 - Login is user tile + 4-digit PIN (`{userId, pin}`); the PIN's bcrypt hash lives in `User.password`, validate with `isValidPin` from `middleware/auth.ts`; recovery: `npm run reset-pin -- <username> <pin>`
 - Show request errors with `notifyError(err, fallback)` from `lib/utils.ts`, not an empty `catch`
 - Stock changes go through `StockMovement`; wrap multi-table writes (sales, orders) in `prisma.$transaction`

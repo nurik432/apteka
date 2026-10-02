@@ -88,11 +88,11 @@ export default function InventoryPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Инвентаризация</h1>
-          <p className="text-muted-foreground text-sm mt-1">Сверка фактических остатков</p>
+          <h1 className="text-[22px] font-bold leading-tight">Инвентаризация</h1>
+          <p className="text-muted-foreground text-[13px]">Сверка фактических остатков</p>
         </div>
         <div className="flex items-center gap-3">
           {changedCount > 0 && (
@@ -104,7 +104,7 @@ export default function InventoryPage() {
           <button
             onClick={handleSave}
             disabled={saving || changedCount === 0}
-            className="flex items-center gap-2 px-4 h-10 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/25 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-4 h-10 rounded-lg text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary-hover transition-colors disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
             Применить
@@ -112,7 +112,7 @@ export default function InventoryPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
+      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

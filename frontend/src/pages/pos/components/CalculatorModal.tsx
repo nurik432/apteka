@@ -1,15 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import { X, Delete, Check } from 'lucide-react';
+import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/utils';
 import type { CartItem } from '../types';
 import Numpad, { type NumpadKey } from './Numpad';
-import { toast } from 'sonner';
+import PosDialog from './PosDialog';
 
 interface CalculatorModalProps {
   item: CartItem;
   onConfirm: (itemId: string, newQty: number) => void;
   onClose: () => void;
 }
+
+const KEYS: NumpadKey[] = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', 'BS'];
 
 function CalculatorModal({ item, onConfirm, onClose }: CalculatorModalProps) {
   const [input, setInput] = useState(String(item.quantity));
@@ -60,66 +62,29 @@ function CalculatorModal({ item, onConfirm, onClose }: CalculatorModalProps) {
     return () => window.removeEventListener('keydown', handler);
   }, [handleKey, handleConfirm, onClose]);
 
-  const buttons: NumpadKey[] = [
-    '1', '2', '3',
-    '4', '5', '6',
-    '7', '8', '9',
-    'C', '0', '.',
-  ];
+  const qty = parseFloat(input) || 0;
+  const hasStockLimit = item.stock !== 999999;
 
-  return createPortal(
-    <div
-      className="pos-modal-overlay"
-      data-pos-modal
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+  return (
+    <PosDialog
+      title="Количество"
+      subtitle={item.name}
+      width={360}
+      onClose={onClose}
+      footer={
+        <>
+          <button type="button" className="btn btn-secondary btn-lg" onClick={onClose}>Отмена</button>
+          <button type="button" className="btn btn-primary btn-lg" onClick={handleConfirm}>Готово</button>
+        </>
+      }
     >
-      <div className="pos-calculator-modal animate-scaleIn">
-        {/* Header */}
-        <div className="pos-calculator-header">
-          <div>
-            <h3 className="pos-calculator-title">{item.name}</h3>
-            <p className="pos-calculator-subtitle">Укажите количество</p>
-          </div>
-          <button className="pos-modal-close-btn" onClick={onClose}>
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Display */}
-        <div className="pos-calculator-display">
-          {input || '0'}
-        </div>
-
-        {/* Numpad */}
-        <Numpad variant="calculator" keys={buttons} onKey={handleKey} />
-
-        {/* Backspace */}
-        <button
-          className="pos-calculator-backspace"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            handleKey('BS');
-          }}
-        >
-          <Delete className="w-5 h-5" />
-          Удалить
-        </button>
-
-        {/* Action buttons */}
-        <div className="pos-calculator-actions">
-          <button className="pos-btn pos-btn--ghost" onClick={onClose}>
-            Отмена
-          </button>
-          <button className="pos-btn pos-btn--primary" onClick={handleConfirm}>
-            <Check className="w-5 h-5" />
-            Подтвердить
-          </button>
-        </div>
+      <div className="pos-display pos-calculator-display">{input || '0'}</div>
+      <div className="flex justify-between text-[13px] text-muted-foreground num">
+        <span>{hasStockLimit ? `В наличии: ${item.stock}` : 'Без ограничения по остатку'}</span>
+        <span>Сумма: {formatCurrency(qty * item.price)}</span>
       </div>
-    </div>,
-    document.body
+      <Numpad keys={KEYS} onKey={handleKey} />
+    </PosDialog>
   );
 }
 

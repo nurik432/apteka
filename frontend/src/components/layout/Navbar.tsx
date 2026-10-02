@@ -18,6 +18,7 @@ import {
   FileText,
   ChevronDown,
   ShieldCheck,
+  Menu,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -81,9 +82,9 @@ const isGroup = (entry: MenuEntry): entry is MenuGroup => 'items' in entry;
 const isPathActive = (pathname: string, path: string) =>
   path === '/' ? pathname === '/' : pathname === path || pathname.startsWith(path + '/');
 
-const baseLinkClass = 'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 border outline-none';
-const activeClass = 'bg-gradient-to-r from-indigo-500/10 to-purple-500/10 text-primary border-primary/20';
-const inactiveClass = 'text-muted-foreground hover:text-foreground hover:bg-muted border-transparent';
+const baseLinkClass = 'flex items-center gap-2 h-9 px-3 rounded-lg text-sm font-medium transition-colors duration-150';
+const activeClass = 'bg-primary-soft text-primary-text font-semibold';
+const inactiveClass = 'text-muted-foreground hover:text-foreground hover:bg-muted';
 
 function MenuLink({ item }: { item: MenuItem }) {
   return (
@@ -116,11 +117,12 @@ function MenuDropdown({ group, items }: { group: MenuGroup; items: MenuItem[] })
         <DropdownMenu.Content
           align="start"
           sideOffset={6}
-          className="z-50 min-w-[200px] p-1 rounded-xl shadow-lg animate-scaleIn"
+          className="z-50 min-w-[200px] p-1 rounded-xl animate-scaleIn"
           style={{
             background: 'var(--color-popover)',
             color: 'var(--color-popover-foreground)',
             border: '1px solid var(--color-border)',
+            boxShadow: 'var(--shadow-pop)',
           }}
         >
           {items.map(item => {
@@ -130,7 +132,7 @@ function MenuDropdown({ group, items }: { group: MenuGroup; items: MenuItem[] })
                 <NavLink
                   to={item.path}
                   className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer outline-none data-[highlighted]:bg-muted ${
-                    itemActive ? 'text-primary font-medium' : ''
+                    itemActive ? 'text-primary-text font-semibold' : ''
                   }`}
                 >
                   <item.icon className="w-4 h-4" />
@@ -145,21 +147,61 @@ function MenuDropdown({ group, items }: { group: MenuGroup; items: MenuItem[] })
   );
 }
 
-export default function Navbar() {
+/** Весь список одним выпадающим меню — для кассы, где шапка компактная */
+function CompactMenu({ items }: { items: MenuItem[] }) {
+  const { pathname } = useLocation();
+
+  return (
+    <DropdownMenu.Root modal={false}>
+      <DropdownMenu.Trigger className="btn btn-ghost h-8 px-2.5 data-[state=open]:bg-muted data-[state=open]:text-foreground">
+        <Menu className="w-4 h-4" />
+        <span>Меню</span>
+      </DropdownMenu.Trigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content
+          align="start"
+          sideOffset={6}
+          className="z-50 min-w-[220px] max-h-[80vh] overflow-y-auto p-1 rounded-xl animate-scaleIn"
+          style={{
+            background: 'var(--color-popover)',
+            color: 'var(--color-popover-foreground)',
+            border: '1px solid var(--color-border)',
+            boxShadow: 'var(--shadow-pop)',
+          }}
+        >
+          {items.map(item => (
+            <DropdownMenu.Item key={item.path} asChild>
+              <NavLink
+                to={item.path}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer outline-none data-[highlighted]:bg-muted ${
+                  isPathActive(pathname, item.path) ? 'text-primary-text font-semibold' : ''
+                }`}
+              >
+                <item.icon className="w-4 h-4" />
+                <span>{item.label}</span>
+              </NavLink>
+            </DropdownMenu.Item>
+          ))}
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
+}
+
+export default function Navbar({ compact = false }: { compact?: boolean }) {
   const { user } = useAuth();
   if (!user) return null;
 
   const canSee = (item: MenuItem) => item.roles.includes(user.role);
 
+  if (compact) {
+    const all = menu.flatMap(entry => (isGroup(entry) ? entry.items : [entry])).filter(canSee);
+    return <CompactMenu items={all} />;
+  }
+
   return (
-    <nav
-      className="flex items-center px-4 border-b overflow-x-auto hide-scrollbar"
-      style={{
-        background: 'var(--color-card)',
-        borderColor: 'var(--color-border)',
-      }}
-    >
-      <ul className="flex items-center gap-1 h-14">
+    <nav className="flex items-center min-w-0 overflow-x-auto hide-scrollbar">
+      <ul className="flex items-center gap-0.5">
         {menu.map(entry => {
           if (!isGroup(entry)) {
             return canSee(entry) ? (

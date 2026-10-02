@@ -87,42 +87,28 @@ export default function LoginPage() {
     : null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden"
-      style={{ background: 'var(--color-background)' }}
-    >
-      {/* Background decoration */}
-      <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-indigo-500/20 to-purple-600/20 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-500/20 to-pink-600/20 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-indigo-500/5 to-purple-500/5 rounded-full blur-3xl" />
-      </div>
-
-      <div className="relative z-10 w-full max-w-md px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="w-full max-w-[440px] px-4 py-8">
         <div
-          className="glass rounded-2xl p-8 animate-scaleIn"
-          style={{
-            background: 'var(--color-card)',
-            border: '1px solid var(--color-border)',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-          }}
+          className="rounded-2xl p-8 bg-card border animate-scaleIn"
+          style={{ boxShadow: 'var(--shadow-pop)' }}
         >
           {/* Logo */}
-          <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mb-4 shadow-lg shadow-indigo-500/25">
-              <Pill className="w-8 h-8 text-white" />
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-[11px] bg-primary text-primary-foreground flex items-center justify-center">
+              <Pill className="w-[22px] h-[22px]" />
             </div>
-            <h1 className="text-2xl font-bold gradient-text">Аптека</h1>
-            <p className="text-sm text-muted-foreground mt-1">Система управления</p>
+            <h1 className="text-xl font-bold">Аптека</h1>
           </div>
 
           {!selected ? (
             /* Шаг 1: выбор сотрудника */
             <div className="space-y-4">
-              <p className="text-sm font-medium text-center">Выберите сотрудника</p>
+              <p className="text-sm text-muted-foreground text-center">Выберите сотрудника</p>
 
               {loadError ? (
                 <div className="space-y-3 text-center">
-                  <div className="px-4 py-3 rounded-xl text-sm bg-destructive/10 text-destructive border border-destructive/20">
+                  <div className="px-4 py-3 rounded-xl text-sm bg-destructive-soft text-destructive">
                     {loadError}
                   </div>
                   <button
@@ -150,12 +136,11 @@ export default function LoginPage() {
                       key={user.id}
                       type="button"
                       onClick={() => selectUser(user)}
-                      className={`flex flex-col items-center gap-2 p-4 rounded-xl text-center transition-all duration-200 hover:bg-muted active:scale-95 ${
-                        user.id === lastUserId ? 'ring-2 ring-primary/40' : ''
+                      className={`flex flex-col items-center gap-1.5 p-3.5 rounded-xl text-center border transition-colors duration-150 hover:bg-muted ${
+                        user.id === lastUserId ? 'border-primary shadow-[0_0_0_3px_var(--color-primary-soft)]' : ''
                       }`}
-                      style={{ border: '1px solid var(--color-border)' }}
                     >
-                      <span className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                      <span className="w-11 h-11 rounded-full bg-muted text-muted-foreground flex items-center justify-center text-[15px] font-bold">
                         {initials(user.fullName) || <User className="w-5 h-5" />}
                       </span>
                       <span className="text-sm font-medium leading-tight line-clamp-2">{user.fullName}</span>
@@ -187,7 +172,7 @@ export default function LoginPage() {
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
                 ) : error ? (
-                  <div className="w-full px-4 py-3 rounded-xl text-sm text-center bg-destructive/10 text-destructive border border-destructive/20 animate-fadeIn">
+                  <div className="w-full px-4 py-3 rounded-xl text-sm text-center bg-destructive-soft text-destructive animate-fadeIn">
                     {error}
                   </div>
                 ) : null}

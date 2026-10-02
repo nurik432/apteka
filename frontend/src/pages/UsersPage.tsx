@@ -13,13 +13,6 @@ interface User {
   createdAt: string;
 }
 
-const roleColors: Record<string, string> = {
-  ADMIN: 'from-red-500 to-pink-600',
-  MANAGER: 'from-blue-500 to-cyan-600',
-  PHARMACIST: 'from-emerald-500 to-green-600',
-  STOREKEEPER: 'from-amber-500 to-orange-600',
-};
-
 export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,27 +73,27 @@ export default function UsersPage() {
   };
 
   const inputClass = "w-full h-10 px-3 rounded-lg text-sm";
-  const inputStyle = { background: 'var(--color-muted)', color: 'var(--color-foreground)', border: '1px solid var(--color-border)' };
+  const inputStyle = { background: 'var(--color-card)', color: 'var(--color-foreground)', border: '1px solid var(--color-border-strong)' };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Пользователи</h1>
-          <p className="text-muted-foreground text-sm mt-1">Управление учётными записями</p>
+          <h1 className="text-[22px] font-bold leading-tight">Пользователи</h1>
+          <p className="text-muted-foreground text-[13px]">Управление учётными записями</p>
         </div>
-        <button onClick={openCreate} className="flex items-center gap-2 px-4 h-10 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25 transition-all">
+        <button onClick={openCreate} className="flex items-center gap-2 px-4 h-10 rounded-lg text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary-hover transition-colors">
           <Plus className="w-4 h-4" /> Добавить
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {users.map(user => (
-          <div key={user.id} className={`rounded-2xl p-5 card-hover ${!user.active ? 'opacity-50' : ''}`} style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
+          <div key={user.id} className={`rounded-xl p-5 card-hover ${!user.active ? 'opacity-50' : ''}`} style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${roleColors[user.role] || 'from-gray-500 to-gray-600'} flex items-center justify-center`}>
-                  <Shield className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded-xl bg-muted text-muted-foreground flex items-center justify-center">
+                  <Shield className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 className="font-semibold truncate max-w-[150px]">{user.fullName}</h3>
@@ -109,16 +102,16 @@ export default function UsersPage() {
               </div>
               <div className="flex gap-1 shrink-0 ml-2">
                 <button onClick={() => openEdit(user)} className="w-7 h-7 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted"><Edit2 className="w-3.5 h-3.5"/></button>
-                <button onClick={() => toggleActive(user)} className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${user.active ? 'text-muted-foreground hover:text-destructive hover:bg-destructive/10' : 'text-emerald-500 hover:bg-emerald-500/10'}`}>
+                <button onClick={() => toggleActive(user)} className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${user.active ? 'text-muted-foreground hover:text-destructive hover:bg-destructive/10' : 'text-success hover:bg-success-soft'}`}>
                   {user.active ? <UserX className="w-3.5 h-3.5"/> : <UserCheck className="w-3.5 h-3.5"/>}
                 </button>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-medium bg-gradient-to-r ${roleColors[user.role] || ''} text-white`}>
+              <span className="badge badge-neutral">
                 {roleLabels[user.role] || user.role}
               </span>
-              <span className={`inline-flex px-2.5 py-1 rounded-lg text-xs font-medium ${user.active ? 'status-green' : 'status-red'}`}>
+              <span className={`badge ${user.active ? 'status-green' : 'status-red'}`}>
                 {user.active ? 'Активен' : 'Неактивен'}
               </span>
             </div>
@@ -127,7 +120,7 @@ export default function UsersPage() {
       </div>
 
       {showForm && createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={() => setShowForm(false)}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/50 animate-fadeIn" onClick={() => setShowForm(false)}>
           <div className="w-full max-w-md flex flex-col rounded-2xl animate-scaleIn shadow-xl overflow-hidden" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)', maxHeight: '90vh' }} onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 pb-4 shrink-0" style={{ borderBottom: '1px solid var(--color-border)' }}>
               <h2 className="text-lg font-bold">{editing ? 'Редактировать' : 'Новый пользователь'}</h2>
@@ -167,7 +160,7 @@ export default function UsersPage() {
               </div>
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setShowForm(false)} className="px-4 h-10 rounded-xl text-sm font-medium hover:bg-muted" style={{ border: '1px solid var(--color-border)' }}>Отмена</button>
-                <button type="submit" className="px-6 h-10 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/25">{editing ? 'Сохранить' : 'Создать'}</button>
+                <button type="submit" className="px-6 h-10 rounded-lg text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary-hover">{editing ? 'Сохранить' : 'Создать'}</button>
               </div>
               </form>
             </div>

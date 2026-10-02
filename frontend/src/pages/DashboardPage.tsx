@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '@/lib/api';
-import { formatCurrency, notifyError } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { canAccess } from '@/lib/access';
+import { formatCurrency, notifyError, getExpiryStatus, getExpiryBadgeClass, getExpiryLabel } from '@/lib/utils';
+import { ShoppingCart, CheckCircle } from 'lucide-react';
 import {
-  TrendingUp, DollarSign, ShoppingCart, Package,
-  AlertTriangle, BarChart3, ArrowUp, ArrowDown,
-} from 'lucide-react';
-import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis,
-  CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
 
 interface DashboardData {
@@ -22,14 +21,34 @@ interface DashboardData {
   expiredCount: number;
 }
 
-const CHART_COLORS = ['#6366f1', '#a855f7', '#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'];
+interface AttentionItem {
+  key: string;
+  name: string;
+  note: string;
+  badgeClass: string;
+  badge: string;
+}
+
+const MAX_ATTENTION = 6;
+
+const tooltipStyle = {
+  background: 'var(--color-card)',
+  border: '1px solid var(--color-border)',
+  borderRadius: '10px',
+  fontSize: '12px',
+};
+const axisTick = { fontSize: 11, fill: 'var(--color-muted-foreground)' };
+const formatMonth = (date: string) =>
+  new Date(date).toLocaleDateString('ru-RU', { month: '2-digit', year: 'numeric' });
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const [data, setData] = useState<DashboardData | null>(null);
   const [salesByDay, setSalesByDay] = useState<any[]>([]);
   const [salesByMonth, setSalesByMonth] = useState<any[]>([]);
   const [topProducts, setTopProducts] = useState<any[]>([]);
   const [stockByCategory, setStockByCategory] = useState<any[]>([]);
+  const [attention, setAttention] = useState<AttentionItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,18 +57,43 @@ export default function DashboardPage() {
 
   const loadDashboard = async () => {
     try {
-      const [dashRes, dayRes, monthRes, topRes, stockRes] = await Promise.all([
+      const [dashRes, dayRes, monthRes, topRes, stockRes, expiryRes, lowRes] = await Promise.all([
         api.get('/analytics/dashboard'),
         api.get('/analytics/sales-by-day'),
         api.get('/analytics/sales-by-month'),
         api.get('/analytics/top-products'),
         api.get('/analytics/stock-by-category'),
+        api.get('/products/expiring'),
+        api.get('/products?lowStock=true&limit=20&sortBy=stock&sortOrder=asc'),
       ]);
       setData(dashRes.data);
       setSalesByDay(dayRes.data);
       setSalesByMonth(monthRes.data);
       setTopProducts(topRes.data);
       setStockByCategory(stockRes.data);
+
+      // Сначала просроченные и истекающие, затем товары с низким остатком
+      const expiring: AttentionItem[] = [...expiryRes.data.expired, ...expiryRes.data.critical, ...expiryRes.data.warning]
+        .map((p: any) => {
+          const status = getExpiryStatus(p.expiryDate);
+          return {
+            key: `exp-${p.id}`,
+            name: p.name,
+            note: `Срок до ${formatMonth(p.expiryDate)}`,
+            badgeClass: getExpiryBadgeClass(status),
+            badge: getExpiryLabel(status),
+          };
+        });
+      const low: AttentionItem[] = lowRes.data.data
+        .filter((p: any) => p.minStock > 0)
+        .map((p: any) => ({
+          key: `low-${p.id}`,
+          name: p.name,
+          note: p.stock <= 0 ? 'Нет в наличии' : `Осталось ${p.stock}, минимум ${p.minStock}`,
+          badgeClass: p.stock <= 0 ? 'status-red' : 'status-yellow',
+          badge: p.stock <= 0 ? 'Закончился' : 'Мало',
+        }));
+      setAttention([...expiring, ...low]);
     } catch (error) {
       console.error('Dashboard load error:', error);
       notifyError(error, 'Не удалось загрузить данные главной страницы');
@@ -66,229 +110,170 @@ export default function DashboardPage() {
     );
   }
 
-  const cards = [
+  const avgCheck = data?.todayChecks ? data.todayRevenue / data.todayChecks : 0;
+  // Сравнение со вчера: последняя точка графика — сегодня, предпоследняя — вчера
+  const yesterday = salesByDay.length >= 2 ? salesByDay[salesByDay.length - 2].revenue : 0;
+  const todayRevenue = data?.todayRevenue || 0;
+  const vsYesterday = yesterday > 0 ? Math.round(((todayRevenue - yesterday) / yesterday) * 100) : null;
+  const kpis: { label: string; value: string; note: string; tone?: string }[] = [
     {
-      title: 'Продажи сегодня',
-      value: formatCurrency(data?.todayRevenue || 0),
-      icon: DollarSign,
-      color: 'from-indigo-500 to-indigo-600',
-      shadowColor: 'shadow-indigo-500/20',
+      label: 'Продажи сегодня',
+      value: formatCurrency(todayRevenue),
+      note: vsYesterday === null ? 'Вчера продаж не было' : `${vsYesterday >= 0 ? '+' : '−'}${Math.abs(vsYesterday)} % ко вчера`,
+      tone: vsYesterday === null ? undefined : vsYesterday >= 0 ? 'text-success' : 'text-destructive',
     },
-    {
-      title: 'Прибыль сегодня',
-      value: formatCurrency(data?.todayProfit || 0),
-      icon: TrendingUp,
-      color: 'from-emerald-500 to-emerald-600',
-      shadowColor: 'shadow-emerald-500/20',
-    },
-    {
-      title: 'Чеков сегодня',
-      value: String(data?.todayChecks || 0),
-      icon: ShoppingCart,
-      color: 'from-purple-500 to-purple-600',
-      shadowColor: 'shadow-purple-500/20',
-    },
-    {
-      title: 'Продажи за месяц',
-      value: formatCurrency(data?.monthRevenue || 0),
-      icon: BarChart3,
-      color: 'from-blue-500 to-blue-600',
-      shadowColor: 'shadow-blue-500/20',
-    },
-    {
-      title: 'Товаров на складе',
-      value: String(data?.totalProducts || 0),
-      icon: Package,
-      color: 'from-amber-500 to-amber-600',
-      shadowColor: 'shadow-amber-500/20',
-    },
-    {
-      title: 'Внимание',
-      value: `${data?.lowStockCount || 0} мало / ${data?.expiredCount || 0} просрочено`,
-      icon: AlertTriangle,
-      color: 'from-red-500 to-red-600',
-      shadowColor: 'shadow-red-500/20',
-    },
+    { label: 'Чеков сегодня', value: String(data?.todayChecks || 0), note: `Средний чек ${formatCurrency(avgCheck)}` },
+    { label: 'Продажи за месяц', value: formatCurrency(data?.monthRevenue || 0), note: `Прибыль ${formatCurrency(data?.monthProfit || 0)}` },
+    { label: 'Наименований', value: String(data?.totalProducts || 0), note: `Мало: ${data?.lowStockCount || 0} · просрочено: ${data?.expiredCount || 0}` },
   ];
+  const maxStock = Math.max(1, ...stockByCategory.map(c => c.totalItems));
+  const today = new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-1">Обзор деятельности аптеки</p>
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <div className="mr-auto">
+          <h1 className="text-[22px] font-bold leading-tight">Главная</h1>
+          <p className="text-muted-foreground text-[13px] first-letter:uppercase">{today}</p>
+        </div>
+        {canAccess(user?.role, 'pos') && (
+          <Link to="/pos" className="btn btn-primary">
+            <ShoppingCart className="w-4 h-4" />
+            Открыть кассу
+          </Link>
+        )}
       </div>
 
-      {/* Metric cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {cards.map((card, i) => (
-          <div
-            key={i}
-            className={`rounded-2xl p-5 card-hover cursor-default animate-fadeIn`}
-            style={{
-              background: 'var(--color-card)',
-              border: '1px solid var(--color-border)',
-              animationDelay: `${i * 50}ms`,
-            }}
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">{card.title}</p>
-                <p className="text-xl font-bold mt-1">{card.value}</p>
-              </div>
-              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${card.color} flex items-center justify-center shadow-lg ${card.shadowColor}`}>
-                <card.icon className="w-5 h-5 text-white" />
-              </div>
-            </div>
+      {/* Показатели */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {kpis.map(kpi => (
+          <div key={kpi.label} className="rounded-xl bg-card border px-4 py-3.5">
+            <p className="text-xs text-muted-foreground">{kpi.label}</p>
+            <p className="text-2xl font-bold num tracking-tight">{kpi.value}</p>
+            <p className={`text-xs num ${kpi.tone || 'text-muted-foreground'}`}>{kpi.note}</p>
           </div>
         ))}
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Sales by Day */}
-        <div
-          className="rounded-2xl p-6"
-          style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}
-        >
-          <h3 className="text-base font-semibold mb-4">Продажи по дням</h3>
-          <div className="h-[300px]">
+      <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-3">
+        {/* Продажи по дням */}
+        <div className="rounded-xl bg-card border p-4">
+          <h3 className="text-sm font-semibold mb-3">Продажи за 30 дней</h3>
+          <div className="h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={salesByDay}>
-                <defs>
-                  <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
-                  tickFormatter={(v) => v.split('-').slice(1).join('.')}
-                />
-                <YAxis tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }} />
+              <BarChart data={salesByDay}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                <XAxis dataKey="date" tick={axisTick} tickFormatter={(v) => v.split('-').reverse().slice(0, 2).join('.')} minTickGap={16} />
+                <YAxis tick={axisTick} />
                 <Tooltip
-                  contentStyle={{
-                    background: 'var(--color-card)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                  }}
+                  contentStyle={tooltipStyle}
+                  cursor={{ fill: 'var(--color-muted)' }}
                   formatter={(value: number) => [formatCurrency(value), 'Выручка']}
-                  labelFormatter={(label) => `Дата: ${label}`}
+                  labelFormatter={(label) => String(label).split('-').reverse().join('.')}
                 />
-                <Area
-                  type="monotone"
-                  dataKey="revenue"
-                  stroke="#6366f1"
-                  strokeWidth={2}
-                  fill="url(#colorRevenue)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Sales by Month */}
-        <div
-          className="rounded-2xl p-6"
-          style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}
-        >
-          <h3 className="text-base font-semibold mb-4">Продажи по месяцам</h3>
-          <div className="h-[300px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={salesByMonth}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-                <XAxis
-                  dataKey="month"
-                  tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
-                />
-                <YAxis tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }} />
-                <Tooltip
-                  contentStyle={{
-                    background: 'var(--color-card)',
-                    border: '1px solid var(--color-border)',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                  }}
-                  formatter={(value: number) => [formatCurrency(value), 'Выручка']}
-                />
-                <Bar dataKey="revenue" fill="#6366f1" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="profit" fill="#10b981" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="revenue" fill="var(--color-primary)" radius={[3, 3, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </div>
+
+        {/* Требует внимания */}
+        <div className="rounded-xl bg-card border flex flex-col min-h-0">
+          <div className="flex items-center justify-between px-4 pt-4 pb-2">
+            <h3 className="text-sm font-semibold">Требует внимания</h3>
+            {attention.length > 0 && <span className="badge badge-neutral num">{attention.length}</span>}
+          </div>
+          {attention.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-2 py-10 text-center">
+              <CheckCircle className="w-8 h-8 text-success" />
+              <p className="text-sm text-muted-foreground">Остатки и сроки годности в норме</p>
+            </div>
+          ) : (
+            <>
+              <ul>
+                {attention.slice(0, MAX_ATTENTION).map(item => (
+                  <li key={item.key} className="flex items-center gap-3 px-4 py-2 border-t">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[13px] font-medium truncate">{item.name}</p>
+                      <p className="text-xs text-muted-foreground num">{item.note}</p>
+                    </div>
+                    <span className={`badge ${item.badgeClass}`}>{item.badge}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-auto flex gap-4 px-4 py-3 border-t text-[13px] font-medium">
+                <Link to="/expiry" className="text-primary-text hover:underline">Сроки годности</Link>
+                <Link to="/products" className="text-primary-text hover:underline">Все товары</Link>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Bottom Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Products */}
-        <div
-          className="rounded-2xl p-6"
-          style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}
-        >
-          <h3 className="text-base font-semibold mb-4">Топ-10 товаров (за месяц)</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+        {/* Продажи по месяцам */}
+        <div className="rounded-xl bg-card border p-4">
+          <h3 className="text-sm font-semibold mb-3">Продажи по месяцам</h3>
+          <div className="h-[240px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={salesByMonth}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                <XAxis dataKey="month" tick={axisTick} tickFormatter={(v) => v.split('-')[1]} />
+                <YAxis tick={axisTick} />
+                <Tooltip
+                  contentStyle={tooltipStyle}
+                  cursor={{ fill: 'var(--color-muted)' }}
+                  formatter={(value: number, name: string) => [formatCurrency(value), name === 'revenue' ? 'Выручка' : 'Прибыль']}
+                />
+                <Bar dataKey="revenue" fill="var(--color-primary)" radius={[3, 3, 0, 0]} />
+                <Bar dataKey="profit" fill="var(--color-info)" radius={[3, 3, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2 flex gap-4">
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-primary" />Выручка</span>
+            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-sm bg-info" />Прибыль</span>
+          </p>
+        </div>
+
+        {/* Топ товаров */}
+        <div className="rounded-xl bg-card border p-4">
+          <h3 className="text-sm font-semibold mb-3">Топ-10 товаров за месяц</h3>
           {topProducts.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">Нет данных о продажах</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">Продаж за месяц пока нет</p>
           ) : (
-            <div className="space-y-3">
+            <ol className="space-y-2">
               {topProducts.map((product, i) => (
-                <div key={product.productId} className="flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs text-white font-bold flex-shrink-0">
-                    {i + 1}
-                  </span>
-                  <div className="flex-1 min-w-0 pr-4">
-                    <p className="text-sm font-medium truncate">{product.name}</p>
-                    <p className="text-xs text-muted-foreground"> {product.quantity} {product.unit || 'ед.'}</p>
-                  </div>
-                  <span className="text-sm font-semibold text-primary shrink-0">
-                    {formatCurrency(product.revenue)}
-                  </span>
-                </div>
+                <li key={product.productId} className="flex items-center gap-2.5 text-[13px]">
+                  <span className="w-5 text-right text-muted-foreground num">{i + 1}.</span>
+                  <span className="flex-1 min-w-0 truncate font-medium">{product.name}</span>
+                  <span className="text-muted-foreground num">{product.quantity} ед.</span>
+                  <span className="font-semibold num w-24 text-right">{formatCurrency(product.revenue)}</span>
+                </li>
               ))}
-            </div>
+            </ol>
           )}
         </div>
 
-        {/* Stock by Category */}
-        <div
-          className="rounded-2xl p-6"
-          style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}
-        >
-          <h3 className="text-base font-semibold mb-4">Остатки по категориям</h3>
+        {/* Остатки по категориям */}
+        <div className="rounded-xl bg-card border p-4">
+          <h3 className="text-sm font-semibold mb-3">Остатки по категориям</h3>
           {stockByCategory.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-8 text-center">Нет данных</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">На складе пока нет товаров</p>
           ) : (
-            <div className="h-[280px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={stockByCategory}
-                    dataKey="totalItems"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={100}
-                    strokeWidth={2}
-                    stroke="var(--color-card)"
-                  >
-                    {stockByCategory.map((_, index) => (
-                      <Cell key={index} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      background: 'var(--color-card)',
-                      border: '1px solid var(--color-border)',
-                      borderRadius: '12px',
-                      fontSize: '12px',
-                    }}
-                    formatter={(value: number, name: string) => [`${value} ед.`, name]}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+            <ul className="space-y-2.5">
+              {stockByCategory.slice(0, 8).map(cat => (
+                <li key={cat.name} className="text-[13px]">
+                  <div className="flex justify-between gap-2">
+                    <span className="truncate">{cat.name}</span>
+                    <span className="num text-muted-foreground shrink-0">{cat.totalItems} ед.</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-muted mt-1 overflow-hidden">
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${(cat.totalItems / maxStock) * 100}%` }} />
+                  </div>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       </div>

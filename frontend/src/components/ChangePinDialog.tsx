@@ -68,7 +68,7 @@ export default function ChangePinDialog({ onClose }: { onClose: () => void }) {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50 animate-fadeIn"
       data-pos-modal
       onMouseDown={e => { if (e.target === e.currentTarget && !loading) onClose(); }}
     >
@@ -110,7 +110,7 @@ export default function ChangePinDialog({ onClose }: { onClose: () => void }) {
           {loading ? (
             <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
           ) : error ? (
-            <div className="w-full px-4 py-3 rounded-xl text-sm text-center bg-destructive/10 text-destructive border border-destructive/20">
+            <div className="w-full px-4 py-3 rounded-xl text-sm text-center bg-destructive-soft text-destructive">
               {error}
             </div>
           ) : null}

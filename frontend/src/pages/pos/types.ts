@@ -10,6 +10,7 @@ export interface CartItem {
   unit?: string;
   piecesPerPack: number;
   isCustom?: boolean;
+  expiryDate?: string | null;
 }
 
 export interface Product {
@@ -26,6 +27,7 @@ export interface Product {
   form?: string;
   dosage?: string;
   image?: string | null;
+  expiryDate?: string | null;
 }
 
 export interface Category {

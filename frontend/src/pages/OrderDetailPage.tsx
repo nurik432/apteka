@@ -189,19 +189,19 @@ export default function OrderDetailPage() {
           <h1 className="text-2xl font-bold flex items-center gap-2">
             Заказ #{order.id}
             {isCompleted ? (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-green-500/10 text-green-500 border border-green-500/20">Оприходован</span>
+              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-success-soft text-success border border-green-500/20">Оприходован</span>
             ) : (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-500/10 text-amber-500 border border-amber-500/20">Черновик</span>
+              <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-warning-soft text-warning border border-amber-500/20">Черновик</span>
             )}
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">{formatDate(order.createdAt)}</p>
+          <p className="text-muted-foreground text-[13px]">{formatDate(order.createdAt)}</p>
         </div>
         <div className="ml-auto flex items-center gap-2">
           {!isCompleted && (
             <>
               <button
                 onClick={handleDelete}
-                className="flex items-center gap-2 px-4 h-10 rounded-xl text-sm font-medium text-red-500 bg-red-500/10 hover:bg-red-500/20 transition-colors"
+                className="flex items-center gap-2 px-4 h-10 rounded-xl text-sm font-medium text-destructive bg-destructive-soft hover:bg-destructive-soft transition-colors"
               >
                 <Trash2 className="w-4 h-4" />
                 Удалить заказ
@@ -210,12 +210,12 @@ export default function OrderDetailPage() {
                 onClick={autoFillLowStock}
                 className="flex items-center gap-2 px-4 h-10 rounded-xl text-sm font-medium transition-colors hover:bg-muted border border-border"
               >
-                <Zap className="w-4 h-4 text-amber-500" />
+                <Zap className="w-4 h-4 text-warning" />
                 Автозаполнение
               </button>
               <button
                 onClick={confirmReceipt}
-                className="flex items-center gap-2 px-4 h-10 rounded-xl text-sm font-medium text-white bg-green-600 hover:bg-green-700 shadow-lg shadow-green-600/25 transition-all"
+                className="flex items-center gap-2 px-4 h-10 rounded-lg text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary-hover transition-colors"
               >
                 <CheckCircle2 className="w-4 h-4" />
                 Подтвердить приход
@@ -228,7 +228,7 @@ export default function OrderDetailPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2 space-y-6">
           {/* Items Table */}
-          <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
             <div className="p-4 border-b border-border flex items-center justify-between">
               <h3 className="font-semibold text-lg">Позиции заказа</h3>
               {!isCompleted && (
@@ -349,7 +349,7 @@ export default function OrderDetailPage() {
                         </td>
                         <td className="px-4 py-2 text-right">
                           {!isCompleted && (
-                            <button onClick={() => removeItem(item.id)} className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors">
+                            <button onClick={() => removeItem(item.id)} className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive-soft transition-colors">
                               <Trash2 className="w-4 h-4" />
                             </button>
                           )}
@@ -365,7 +365,7 @@ export default function OrderDetailPage() {
 
         <div className="space-y-6">
           {/* Summary Card */}
-          <div className="rounded-2xl border border-border bg-card p-6">
+          <div className="rounded-xl border border-border bg-card p-6">
             <h3 className="font-semibold text-lg mb-4">Информация</h3>
             
             <div className="space-y-4">
@@ -408,7 +408,7 @@ export default function OrderDetailPage() {
           </div>
 
           {!isCompleted && (
-            <div className="rounded-2xl bg-primary/10 border border-primary/20 p-5">
+            <div className="rounded-xl bg-primary/10 border border-primary/20 p-5">
               <h4 className="font-medium text-primary mb-2">Подсказка</h4>
               <p className="text-sm text-muted-foreground">
                 Укажите фактическое полученное количество в колонке <b>"Получено"</b>. 

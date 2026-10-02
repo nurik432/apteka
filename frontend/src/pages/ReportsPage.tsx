@@ -52,21 +52,21 @@ export default function ReportsPage() {
   };
 
   const summary = reportData?.summary;
-  const inputStyle = { background: 'var(--color-muted)', color: 'var(--color-foreground)', border: '1px solid var(--color-border)' };
+  const inputStyle = { background: 'var(--color-card)', color: 'var(--color-foreground)', border: '1px solid var(--color-border-strong)' };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Отчёты</h1>
-          <p className="text-muted-foreground text-sm mt-1">Финансовые отчёты по продажам</p>
+          <h1 className="text-[22px] font-bold leading-tight">Отчёты</h1>
+          <p className="text-muted-foreground text-[13px]">Финансовые отчёты по продажам</p>
         </div>
         <div className="flex gap-2">
-          <button onClick={exportExcel} className="flex items-center gap-2 px-4 h-10 rounded-xl text-sm font-medium hover:bg-muted transition-colors" style={{ border: '1px solid var(--color-border)' }}>
+          <button onClick={exportExcel} className="flex items-center gap-2 px-4 h-10 rounded-lg text-sm font-medium hover:bg-muted transition-colors bg-card" style={{ border: '1px solid var(--color-border-strong)' }}>
             <Download className="w-4 h-4" />
             Excel
           </button>
-          <button onClick={exportPDF} className="flex items-center gap-2 px-4 h-10 rounded-xl text-sm font-medium hover:bg-muted transition-colors" style={{ border: '1px solid var(--color-border)' }}>
+          <button onClick={exportPDF} className="flex items-center gap-2 px-4 h-10 rounded-lg text-sm font-medium hover:bg-muted transition-colors bg-card" style={{ border: '1px solid var(--color-border-strong)' }}>
             <FileText className="w-4 h-4" />
             PDF
           </button>
@@ -86,7 +86,7 @@ export default function ReportsPage() {
               key={p.key}
               onClick={() => { setPeriod(p.key); setDateFrom(''); setDateTo(''); }}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                period === p.key && !dateFrom ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'
+                period === p.key && !dateFrom ? 'bg-primary hover:bg-primary-hover text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {p.label}
@@ -99,7 +99,7 @@ export default function ReportsPage() {
           <span className="text-muted-foreground">—</span>
           <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)} className="h-10 px-3 rounded-lg text-sm" style={inputStyle} />
           {dateFrom && dateTo && (
-            <button onClick={loadReport} className="px-4 h-10 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600">
+            <button onClick={loadReport} className="px-4 h-10 rounded-lg text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary-hover">
               Показать
             </button>
           )}
@@ -110,14 +110,14 @@ export default function ReportsPage() {
       {summary && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
-            { label: 'Выручка', value: formatCurrency(summary.totalRevenue), color: 'from-indigo-500 to-indigo-600' },
-            { label: 'Наличными', value: formatCurrency(summary.totalCash), color: 'from-emerald-500 to-emerald-600' },
-            { label: 'Картой', value: formatCurrency(summary.totalCard), color: 'from-blue-500 to-blue-600' },
-            { label: 'Прибыль', value: formatCurrency(summary.totalProfit), color: 'from-green-500 to-green-600' },
-            { label: 'Чеков', value: String(summary.totalChecks), color: 'from-purple-500 to-purple-600' },
-            { label: 'Средний чек', value: formatCurrency(summary.averageCheck), color: 'from-indigo-400 to-indigo-500' },
+            { label: 'Выручка', value: formatCurrency(summary.totalRevenue) },
+            { label: 'Наличными', value: formatCurrency(summary.totalCash) },
+            { label: 'Картой', value: formatCurrency(summary.totalCard) },
+            { label: 'Прибыль', value: formatCurrency(summary.totalProfit) },
+            { label: 'Чеков', value: String(summary.totalChecks) },
+            { label: 'Средний чек', value: formatCurrency(summary.averageCheck) },
           ].map((card, i) => (
-            <div key={i} className="rounded-2xl p-4 card-hover" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
+            <div key={i} className="rounded-xl p-4 card-hover" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
               <p className="text-xs text-muted-foreground mb-1">{card.label}</p>
               <p className="text-xl font-bold">{card.value}</p>
             </div>
@@ -127,7 +127,7 @@ export default function ReportsPage() {
 
       {/* Sales Table */}
       {reportData && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
+        <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -143,9 +143,9 @@ export default function ReportsPage() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Загрузка...</td></tr>
+                  <tr><td colSpan={7} className="px-4 py-5"><div className="space-y-3"><div className="skeleton w-2/3" /><div className="skeleton w-full" /><div className="skeleton w-4/5" /></div></td></tr>
                 ) : reportData.sales?.length === 0 ? (
-                  <tr><td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">Нет продаж за выбранный период</td></tr>
+                  <tr><td colSpan={7}><div className="empty-state"><b>Нет продаж за выбранный период</b><p>Выберите другой период или даты.</p></div></td></tr>
                 ) : (
                   reportData.sales?.map((sale: any) => (
                     <tr key={sale.id} className="table-row-hover" style={{ borderBottom: '1px solid var(--color-border)' }}>

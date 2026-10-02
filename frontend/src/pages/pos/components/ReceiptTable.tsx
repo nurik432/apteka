@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Minus, Trash2, ShoppingCart, Pill } from 'lucide-react';
+import { Plus, Minus, X, ScanBarcode, Pill } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import type { CartItem } from '../types';
 
@@ -27,9 +27,9 @@ function ReceiptTable({
   if (cart.length === 0) {
     return (
       <div className="pos-receipt-empty">
-        <ShoppingCart className="w-16 h-16 pos-receipt-empty-icon" />
+        <ScanBarcode className="pos-receipt-empty-icon" />
         <p>Чек пуст</p>
-        <p className="pos-receipt-empty-hint">Сканируйте штрихкод или выберите товар</p>
+        <p className="pos-receipt-empty-hint">Сканируйте штрихкод или нажмите F4, чтобы найти товар</p>
       </div>
     );
   }
@@ -38,11 +38,10 @@ function ReceiptTable({
     <div className="pos-receipt-table-wrapper">
       {/* Заголовок таблицы */}
       <div className="pos-receipt-header">
-        <span className="pos-receipt-col-num">#</span>
+        <span className="pos-receipt-col-num">№</span>
         <span className="pos-receipt-col-name">Наименование</span>
         <span className="pos-receipt-col-qty">Кол-во</span>
         <span className="pos-receipt-col-price">Цена</span>
-        <span className="pos-receipt-col-discount">Скидка</span>
         <span className="pos-receipt-col-total">Сумма</span>
         <span className="pos-receipt-col-actions"></span>
       </div>
@@ -64,16 +63,15 @@ function ReceiptTable({
             >
               <span className="pos-receipt-col-num">{index + 1}</span>
               <span className="pos-receipt-col-name">
-                <span className="pos-receipt-item-name">
-                  {isTabletSale && <Pill className="w-3.5 h-3.5 pos-receipt-tablet-icon" />}
-                  {item.name}
-                </span>
+                <span className="pos-receipt-item-name">{item.name}</span>
                 <span className="pos-receipt-item-unit">
+                  {isTabletSale && <Pill className="w-3.5 h-3.5 pos-receipt-tablet-icon" />}
                   {isCustom
-                    ? 'произв.'
+                    ? 'свободная позиция'
                     : isTabletSale
-                      ? `${item.quantity} шт из ${item.piecesPerPack}`
+                      ? `${item.quantity} шт из упаковки ${item.piecesPerPack}`
                       : item.unit || 'шт'}
+                  {item.discount > 0 && ` · скидка ${formatCurrency(item.discount)}`}
                 </span>
               </span>
               <span className="pos-receipt-col-qty">
@@ -91,9 +89,10 @@ function ReceiptTable({
                         onDecreaseQty(item.id);
                         refocusBarcode();
                       }}
-                      title="Уменьшить"
+                      title="Уменьшить (−)"
+                      aria-label="Уменьшить количество"
                     >
-                      <Minus className="w-3.5 h-3.5" />
+                      <Minus className="w-4 h-4" />
                     </button>
                     <span className="pos-receipt-qty-value">{item.quantity}</span>
                     <button
@@ -104,17 +103,15 @@ function ReceiptTable({
                         onIncreaseQty(item.id);
                         refocusBarcode();
                       }}
-                      title="Увеличить"
+                      title="Увеличить (+)"
+                      aria-label="Увеличить количество"
                     >
-                      <Plus className="w-3.5 h-3.5" />
+                      <Plus className="w-4 h-4" />
                     </button>
                   </div>
                 )}
               </span>
               <span className="pos-receipt-col-price">{formatCurrency(item.price)}</span>
-              <span className="pos-receipt-col-discount">
-                {item.discount > 0 ? `-${formatCurrency(item.discount)}` : '—'}
-              </span>
               <span className="pos-receipt-col-total pos-receipt-item-total">
                 {formatCurrency(itemTotal)}
               </span>
@@ -128,8 +125,9 @@ function ReceiptTable({
                     refocusBarcode();
                   }}
                   title="Удалить (Delete)"
+                  aria-label="Удалить позицию"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <X className="w-4 h-4" />
                 </button>
               </span>
             </div>

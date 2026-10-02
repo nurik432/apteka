@@ -1,14 +1,16 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Check } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { Check, Printer } from 'lucide-react';
+import { formatCurrency, formatDateTime } from '@/lib/utils';
 
 interface ReceiptModalProps {
   sale: any;
+  /** Сдача покупателю: считается на кассе, сервер её не хранит */
+  change: number;
   onClose: () => void;
 }
 
-function ReceiptModal({ sale, onClose }: ReceiptModalProps) {
+function ReceiptModal({ sale, change, onClose }: ReceiptModalProps) {
   // Keyboard Esc / Enter to close
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -21,61 +23,64 @@ function ReceiptModal({ sale, onClose }: ReceiptModalProps) {
     return () => window.removeEventListener('keydown', handler);
   }, [onClose]);
 
+  const paid = (sale.cashAmount || 0) + (sale.cardAmount || 0) + change;
+
   return createPortal(
     <div
-      className="pos-modal-overlay"
+      className="pos-modal-overlay pos-print-root"
       data-pos-modal
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="pos-receipt-modal animate-scaleIn">
-        {/* Success icon */}
-        <div className="pos-receipt-success-icon">
-          <Check className="w-10 h-10" />
-        </div>
+      <div role="dialog" aria-modal="true" aria-label="Продажа оформлена" className="pos-dialog animate-scaleIn" style={{ maxWidth: 420 }}>
+        <div className="pos-dialog-body items-center text-center !pt-7">
+          <div className="pos-done-icon no-print">
+            <Check className="w-7 h-7" />
+          </div>
+          <h2 className="text-xl font-bold mt-1 pos-receipt-modal-title">Продажа оформлена</h2>
+          <p className="text-muted-foreground num">Чек № {sale.id} · {formatDateTime(sale.createdAt || new Date())}</p>
 
-        <h2 className="pos-receipt-modal-title">Продажа оформлена!</h2>
-        <p className="pos-receipt-modal-subtitle">Чек #{sale.id}</p>
+          <div className="pos-receipt-lines">
+            {sale.items?.map((item: any) => (
+              <div key={item.id}>
+                <span className="truncate">{item.customName || item.product?.name}</span>
+                <span className="text-muted-foreground shrink-0">
+                  {item.quantity} × {formatCurrency(item.price)}
+                </span>
+              </div>
+            ))}
+          </div>
 
-        {/* Items */}
-        <div className="pos-receipt-modal-items">
-          {sale.items?.map((item: any) => (
-            <div key={item.id} className="pos-receipt-modal-item">
-              <span className="pos-receipt-modal-item-name">
-                {item.customName || item.product?.name}
-              </span>
-              <span className="pos-receipt-modal-item-detail">
-                {item.quantity} {item.product?.unit || 'шт'} × {formatCurrency(item.price)}
-              </span>
+          <div className="pos-receipt-totals">
+            <div>
+              <span>Итого</span>
+              <b>{formatCurrency(sale.finalAmount)}</b>
             </div>
-          ))}
+            <div>
+              <span>
+                {sale.paymentType === 'cash' ? 'Наличные' : sale.paymentType === 'card' ? 'Карта' : 'Наличные и карта'}
+              </span>
+              <span>{formatCurrency(paid)}</span>
+            </div>
+            {change > 0.005 && (
+              <div className="pos-receipt-change">
+                <span>Сдача</span>
+                <span>{formatCurrency(change)}</span>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Total */}
-        <div className="pos-receipt-modal-total">
-          <span>Итого</span>
-          <span className="pos-receipt-modal-total-value">
-            {formatCurrency(sale.finalAmount)}
-          </span>
+        <div className="pos-dialog-foot no-print">
+          <button type="button" className="btn btn-secondary btn-lg" onClick={() => window.print()}>
+            <Printer className="w-[18px] h-[18px]" />
+            Печать
+          </button>
+          <button type="button" className="btn btn-primary btn-lg" onClick={onClose}>
+            Новый чек <kbd>Enter</kbd>
+          </button>
         </div>
-
-        {/* Payment info */}
-        <div className="pos-receipt-modal-payment">
-          <span>Оплата</span>
-          <span>
-            {sale.paymentType === 'cash'
-              ? 'Наличные'
-              : sale.paymentType === 'card'
-                ? 'Карта'
-                : `Смеш. (${formatCurrency(sale.cashAmount)} нал / ${formatCurrency(sale.cardAmount)} карта)`}
-          </span>
-        </div>
-
-        {/* Close button */}
-        <button className="pos-btn pos-btn--primary pos-receipt-modal-close" onClick={onClose}>
-          Готово
-        </button>
       </div>
     </div>,
     document.body

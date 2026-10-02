@@ -306,10 +306,10 @@ exportRouter.get('/report-pdf', authMiddleware, async (req: AuthRequest, res: Re
     doc.moveDown(0.5);
     doc.fontSize(12);
     doc.text(`Количество чеков: ${sales.length}`);
-    doc.text(`Выручка: ${totalRevenue.toFixed(2)} ₸`);
-    doc.text(`Себестоимость: ${totalCost.toFixed(2)} ₸`);
-    doc.text(`Прибыль: ${totalProfit.toFixed(2)} ₸`);
-    doc.text(`Средний чек: ${sales.length > 0 ? (totalRevenue / sales.length).toFixed(2) : 0} ₸`);
+    doc.text(`Выручка: ${totalRevenue.toFixed(2)} смн.`);
+    doc.text(`Себестоимость: ${totalCost.toFixed(2)} смн.`);
+    doc.text(`Прибыль: ${totalProfit.toFixed(2)} смн.`);
+    doc.text(`Средний чек: ${sales.length > 0 ? (totalRevenue / sales.length).toFixed(2) : 0} смн.`);
 
     doc.end();
   } catch (error) {
@@ -319,6 +319,21 @@ exportRouter.get('/report-pdf', authMiddleware, async (req: AuthRequest, res: Re
 });
 
 // GET /api/export/backup — резервная копия базы данных (SQLite)
+// Время последней скачанной копии хранится рядом с базой (файл не попадает в git)
+const LAST_BACKUP_FILE = path.join(__dirname, '../../../database/.last-backup');
+
+// GET /api/export/backup-info — когда последний раз скачивали резервную копию
+exportRouter.get('/backup-info', authMiddleware, roleGuard('ADMIN'), (_req: AuthRequest, res: Response): void => {
+  let lastBackupAt: string | null = null;
+  try {
+    const saved = fs.readFileSync(LAST_BACKUP_FILE, 'utf8').trim();
+    if (!Number.isNaN(Date.parse(saved))) lastBackupAt = saved;
+  } catch {
+    // файла нет — копию ещё не делали
+  }
+  res.json({ lastBackupAt });
+});
+
 exportRouter.get('/backup', authMiddleware, roleGuard('ADMIN'), async (_req: AuthRequest, res: Response): Promise<void> => {
   const pad = (n: number) => String(n).padStart(2, '0');
   const now = new Date();
@@ -332,6 +347,7 @@ exportRouter.get('/backup', authMiddleware, roleGuard('ADMIN'), async (_req: Aut
 
     res.download(tempFile, `apteka-backup-${stamp}.db`, (err) => {
       if (err) console.error('Backup download error:', err);
+      else fs.writeFile(LAST_BACKUP_FILE, now.toISOString(), () => {});
       fs.unlink(tempFile, () => {});
     });
   } catch (error) {

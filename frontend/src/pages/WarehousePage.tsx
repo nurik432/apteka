@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import api from '@/lib/api';
 import { formatCurrency, formatDateTime, notifyError } from '@/lib/utils';
-import { PackagePlus, PackageMinus, Undo2, History, ChevronLeft, ChevronRight, Search, Plus } from 'lucide-react';
+import { PackagePlus, PackageMinus, Undo2, History, ChevronLeft, ChevronRight, Search, Plus, X } from 'lucide-react';
 import ProductFormModal from '@/components/ProductFormModal';
 import { toast } from 'sonner';
 
@@ -157,25 +157,28 @@ export default function WarehousePage() {
     { key: 'history' as const, label: 'История', icon: History },
   ];
 
+  const receiptUnits = receiptItems.reduce((sum, i) => sum + (parseFloat(String(i.quantity)) || 0), 0);
+  const receiptTotal = receiptItems.reduce((sum, i) => sum + (parseFloat(String(i.quantity)) || 0) * (parseFloat(String(i.price)) || 0), 0);
+
   const inputClass = "w-full h-10 px-3 rounded-lg text-sm";
-  const inputStyle = { background: 'var(--color-muted)', color: 'var(--color-foreground)', border: '1px solid var(--color-border)' };
+  const inputStyle = { background: 'var(--color-card)', color: 'var(--color-foreground)', border: '1px solid var(--color-border-strong)' };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold">Склад</h1>
-        <p className="text-muted-foreground text-sm mt-1">Управление движением товаров</p>
+        <h1 className="text-[22px] font-bold leading-tight">Склад</h1>
+        <p className="text-muted-foreground text-[13px]">Управление движением товаров</p>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 p-1 rounded-xl w-fit" style={{ background: 'var(--color-muted)' }}>
+      <div className="seg w-fit">
         {tabs.map(t => (
           <button
             key={t.key}
+            type="button"
             onClick={() => setTab(t.key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              tab === t.key ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg' : 'text-muted-foreground hover:text-foreground'
-            }`}
+            aria-pressed={tab === t.key}
+            className="flex items-center gap-2"
           >
             <t.icon className="w-4 h-4" />
             {t.label}
@@ -185,7 +188,7 @@ export default function WarehousePage() {
 
       {/* Forms */}
       {tab !== 'history' && (
-        <div className={`rounded-2xl p-6 ${tab === 'receipt' ? 'max-w-full lg:max-w-4xl' : 'max-w-lg'}`} style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
+        <div className={`rounded-xl p-6 ${tab === 'receipt' ? 'max-w-full lg:max-w-4xl' : 'max-w-lg'}`} style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
           <h2 className="text-lg font-semibold mb-4">
             {tab === 'receipt' ? 'Приход товара (Накладная)' : tab === 'writeoff' ? 'Списание товара' : 'Возврат товара'}
           </h2>
@@ -249,8 +252,8 @@ export default function WarehousePage() {
                               <input type="number" step="0.01" min="0" className={`${inputClass} w-full`} style={inputStyle} value={item.sellingPrice} onChange={e => setReceiptItems(prev => prev.map(i => i.id === item.id ? { ...i, sellingPrice: e.target.value } : i))} />
                             </td>
                             <td className="px-4 py-2 text-right">
-                              <button type="button" onClick={() => setReceiptItems(prev => prev.filter(i => i.id !== item.id))} className="text-muted-foreground hover:text-red-500">
-                                ✕
+                              <button type="button" onClick={() => setReceiptItems(prev => prev.filter(i => i.id !== item.id))} className="w-8 h-8 inline-flex items-center justify-center rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive-soft" aria-label="Убрать строку">
+                                <X className="w-4 h-4" />
                               </button>
                             </td>
                           </tr>
@@ -274,9 +277,14 @@ export default function WarehousePage() {
                   </div>
                 </div>
 
-                <button type="submit" disabled={receiptItems.length === 0} className="w-full sm:w-auto px-6 h-10 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-lg shadow-emerald-500/25 transition-all disabled:opacity-50">
-                  Оформить приход
-                </button>
+                <div className="flex flex-wrap items-center gap-4 pt-4 border-t">
+                  <span className="text-sm text-muted-foreground num">Позиций: {receiptItems.length} · единиц: {receiptUnits}</span>
+                  <span className="ml-auto text-[13px] text-muted-foreground">Итого по накладной</span>
+                  <b className="text-[22px] num">{formatCurrency(receiptTotal)}</b>
+                  <button type="submit" disabled={receiptItems.length === 0} className="btn btn-primary btn-lg">
+                    Оформить приход
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="space-y-4">
@@ -295,7 +303,7 @@ export default function WarehousePage() {
                   <label className="text-sm font-medium">Причина / комментарий</label>
                   <input className={inputClass} style={inputStyle} value={form.reason} onChange={e => setForm({...form, reason: e.target.value})} />
                 </div>
-                <button type="submit" className="px-6 h-10 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/25 transition-all">
+                <button type="submit" className="px-6 h-10 rounded-lg text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary-hover transition-colors">
                   Выполнить
                 </button>
               </div>
@@ -306,7 +314,7 @@ export default function WarehousePage() {
 
       {/* History */}
       {tab === 'history' && (
-        <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
+        <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -321,9 +329,9 @@ export default function WarehousePage() {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Загрузка...</td></tr>
+                  <tr><td colSpan={6} className="px-4 py-5"><div className="space-y-3"><div className="skeleton w-2/3" /><div className="skeleton w-full" /><div className="skeleton w-4/5" /></div></td></tr>
                 ) : movements.length === 0 ? (
-                  <tr><td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">Нет данных</td></tr>
+                  <tr><td colSpan={6}><div className="empty-state"><b>Движений пока нет</b><p>Здесь появятся приходы, списания, возвраты и продажи.</p></div></td></tr>
                 ) : movements.map(m => (
                   <tr key={m.id} className="table-row-hover" style={{ borderBottom: '1px solid var(--color-border)' }}>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDateTime(m.createdAt)}</td>

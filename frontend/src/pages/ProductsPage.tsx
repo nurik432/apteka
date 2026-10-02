@@ -4,7 +4,7 @@ import api from '@/lib/api';
 import { formatCurrency, formatDate, getExpiryStatus, getExpiryBadgeClass, getExpiryLabel, notifyError } from '@/lib/utils';
 import {
   Plus, Search, Download, Upload, Edit2, Trash2, X,
-  ChevronLeft, ChevronRight, Filter,
+  ChevronLeft, ChevronRight, Filter, Package,
 } from 'lucide-react';
 import ProductFormModal from '@/components/ProductFormModal';
 import { toast } from 'sonner';
@@ -36,6 +36,8 @@ interface Category {
   name: string;
 }
 
+const PAGE_SIZE = 20;
+
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -43,8 +45,10 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+  const [stockFilter, setStockFilter] = useState<'all' | 'lowStock' | 'expiring'>('all');
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   // Form state
   const [showForm, setShowForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -56,22 +60,25 @@ export default function ProductsPage() {
       setLoading(true);
       const params = new URLSearchParams({
         page: String(page),
-        limit: '20',
+        limit: String(PAGE_SIZE),
         sortBy,
         sortOrder,
         ...(search && { search }),
         ...(categoryFilter && { categoryId: categoryFilter }),
+        ...(stockFilter === 'lowStock' && { lowStock: 'true' }),
+        ...(stockFilter === 'expiring' && { expiring: 'true' }),
       });
 
       const res = await api.get(`/products?${params}`);
       setProducts(res.data.data);
       setTotalPages(res.data.pagination.totalPages);
+      setTotal(res.data.pagination.total);
     } catch (error) {
-      console.error('Load products error:', error);
+      notifyError(error, 'Не удалось загрузить товары');
     } finally {
       setLoading(false);
     }
-  }, [page, search, categoryFilter, sortBy, sortOrder]);
+  }, [page, search, categoryFilter, stockFilter, sortBy, sortOrder]);
 
   const loadCategories = async () => {
     try {
@@ -169,36 +176,37 @@ export default function ProductsPage() {
 
   const inputClass = "w-full h-10 px-3 rounded-lg text-sm transition-all duration-200";
   const inputStyle = {
-    background: 'var(--color-muted)',
+    background: 'var(--color-card)',
     color: 'var(--color-foreground)',
-    border: '1px solid var(--color-border)',
+    border: '1px solid var(--color-border-strong)',
   };
+  const hasFilters = !!search || !!categoryFilter || stockFilter !== 'all';
+  const firstShown = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const lastShown = Math.min(page * PAGE_SIZE, total);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Товары</h1>
-          <p className="text-muted-foreground text-sm mt-1">Управление ассортиментом аптеки</p>
+          <h1 className="text-[22px] font-bold leading-tight">Товары</h1>
+          <p className="text-muted-foreground text-[13px] num">
+            {hasFilters ? `Найдено: ${total}` : `Наименований: ${total}`}
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2 px-4 h-10 rounded-xl text-sm font-medium cursor-pointer transition-colors hover:bg-muted" style={{ border: '1px solid var(--color-border)' }}>
+          <label className="btn btn-secondary cursor-pointer">
             <Upload className="w-4 h-4" />
             Импорт
             <input type="file" accept=".xlsx,.xls,.csv" onChange={handleImport} className="hidden" />
           </label>
-          <button onClick={handleExport} className="flex items-center gap-2 px-4 h-10 rounded-xl text-sm font-medium transition-colors hover:bg-muted" style={{ border: '1px solid var(--color-border)' }}>
+          <button onClick={handleExport} className="btn btn-secondary">
             <Download className="w-4 h-4" />
             Экспорт
           </button>
-          <button
-            onClick={openCreateForm}
-            className="flex items-center gap-2 px-4 h-10 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/25 transition-all"
-            id="add-product-btn"
-          >
+          <button onClick={openCreateForm} className="btn btn-primary" id="add-product-btn">
             <Plus className="w-4 h-4" />
-            Добавить
+            Добавить товар
           </button>
         </div>
       </div>
@@ -212,7 +220,7 @@ export default function ProductsPage() {
             placeholder="Поиск по названию, штрихкоду, артикулу..."
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-full h-10 pl-10 pr-4 rounded-xl text-sm"
+            className="w-full h-9 pl-10 pr-4 rounded-lg text-sm"
             style={inputStyle}
             id="product-search"
           />
@@ -220,7 +228,7 @@ export default function ProductsPage() {
         <select
           value={categoryFilter}
           onChange={(e) => { setCategoryFilter(e.target.value); setPage(1); }}
-          className="h-10 px-3 rounded-xl text-sm min-w-[180px]"
+          className="h-9 px-3 rounded-lg text-sm min-w-[180px]"
           style={inputStyle}
         >
           <option value="">Все категории</option>
@@ -228,10 +236,22 @@ export default function ProductsPage() {
             <option key={cat.id} value={cat.id}>{cat.name}</option>
           ))}
         </select>
+        <div className="seg self-start">
+          {([['all', 'Все'], ['lowStock', 'Мало на складе'], ['expiring', 'Истекает срок']] as const).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              aria-pressed={stockFilter === key}
+              onClick={() => { setStockFilter(key); setPage(1); }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Table */}
-      <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
+      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -259,9 +279,46 @@ export default function ProductsPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">Загрузка...</td></tr>
+                Array.from({ length: 6 }, (_, i) => (
+                  <tr key={i} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                    <td className="px-4 py-4"><div className="skeleton" style={{ width: `${50 + (i % 3) * 15}%` }} /></td>
+                    <td className="px-4 py-4"><div className="skeleton w-24" /></td>
+                    <td className="px-4 py-4"><div className="skeleton w-16" /></td>
+                    <td className="px-4 py-4"><div className="skeleton w-14" /></td>
+                    <td className="px-4 py-4"><div className="skeleton w-20" /></td>
+                    <td className="px-4 py-4" />
+                  </tr>
+                ))
               ) : products.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">Товары не найдены</td></tr>
+                <tr>
+                  <td colSpan={6}>
+                    <div className="empty-state">
+                      <Package />
+                      {hasFilters ? (
+                        <>
+                          <b>Ничего не найдено</b>
+                          <p>Измените запрос или сбросьте фильтры.</p>
+                          <button
+                            type="button"
+                            className="btn btn-secondary mt-1"
+                            onClick={() => { setSearch(''); setCategoryFilter(''); setStockFilter('all'); setPage(1); }}
+                          >
+                            Сбросить фильтры
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <b>Товаров пока нет</b>
+                          <p>Добавьте первый товар или загрузите список из Excel кнопкой «Импорт».</p>
+                          <button type="button" className="btn btn-primary mt-1" onClick={openCreateForm}>
+                            <Plus className="w-4 h-4" />
+                            Добавить товар
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
               ) : (
                 products.map(product => {
                   const expiryStatus = getExpiryStatus(product.expiryDate || null);
@@ -290,7 +347,7 @@ export default function ProductsPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${
+                        <span className={`badge ${
                           isLowStock ? 'status-red' : 'status-green'
                         }`}>
                           {product.stock} {product.unit || 'шт'}
@@ -298,7 +355,7 @@ export default function ProductsPage() {
                       </td>
                       <td className="px-4 py-3">
                         {product.expiryDate ? (
-                          <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium ${getExpiryBadgeClass(expiryStatus)}`}>
+                          <span className={`badge ${getExpiryBadgeClass(expiryStatus)}`}>
                             {formatDate(product.expiryDate)}
                           </span>
                         ) : '—'}
@@ -314,7 +371,7 @@ export default function ProductsPage() {
                           </button>
                           <button
                             onClick={() => handleDelete(product.id)}
-                            className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+                            className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive-soft transition-all"
                             title="Удалить"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -330,25 +387,18 @@ export default function ProductsPage() {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3" style={{ borderTop: '1px solid var(--color-border)' }}>
-            <p className="text-sm text-muted-foreground">Страница {page} из {totalPages}</p>
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page <= 1}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all disabled:opacity-50"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted transition-all disabled:opacity-50"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
+        {total > 0 && (
+          <div className="flex items-center gap-2 px-4 py-2.5 text-[13px] text-muted-foreground num" style={{ borderTop: '1px solid var(--color-border)' }}>
+            <span className="mr-auto">Показано {firstShown}–{lastShown} из {total}</span>
+            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page <= 1} className="btn btn-secondary h-8">
+              <ChevronLeft className="w-4 h-4" />
+              Назад
+            </button>
+            <span>{page} / {totalPages}</span>
+            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages} className="btn btn-secondary h-8">
+              Вперёд
+              <ChevronRight className="w-4 h-4" />
+            </button>
           </div>
         )}
       </div>

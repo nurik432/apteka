@@ -115,10 +115,10 @@ export default function ProductFormModal({ product, initialSearchTerm, onClose, 
     }
   };
 
-  const inputClass = "w-full h-10 px-3 rounded-lg text-sm transition-all duration-200 border border-border bg-muted text-foreground";
+  const inputClass = "w-full h-10 px-3 rounded-lg text-sm transition-all duration-200 border border-border-strong bg-card text-foreground";
 
   return createPortal(
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 bg-black/50 backdrop-blur-sm animate-fadeIn" onClick={onClose}>
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 sm:p-6 bg-black/50 animate-fadeIn" onClick={onClose}>
       <div
         className="w-full max-w-2xl flex flex-col bg-card rounded-2xl animate-scaleIn shadow-xl overflow-hidden border border-border"
         style={{ maxHeight: '90vh' }}
@@ -173,12 +173,16 @@ export default function ProductFormModal({ product, initialSearchTerm, onClose, 
                 <input className={inputClass} value={form.sku} onChange={(e) => setForm({...form, sku: e.target.value})} />
               </div>
               <div>
-                <label className="text-sm font-medium">Закупочная цена</label>
+                <label className="text-sm font-medium">Закупочная цена, смн.</label>
                 <input type="number" step="0.01" className={inputClass} value={form.purchasePrice} onChange={(e) => setForm({...form, purchasePrice: e.target.value})} />
               </div>
               <div>
-                <label className="text-sm font-medium">Цена продажи</label>
+                <label className="text-sm font-medium">Цена продажи, смн.</label>
                 <input type="number" step="0.01" className={inputClass} value={form.sellingPrice} onChange={(e) => setForm({...form, sellingPrice: e.target.value})} />
+                {/* Предупреждение, а не запрет: продажа ниже закупки бывает намеренной */}
+                {parseFloat(String(form.sellingPrice)) > 0 && parseFloat(String(form.sellingPrice)) < parseFloat(String(form.purchasePrice)) && (
+                  <p className="text-xs text-warning mt-1">Цена продажи ниже закупочной</p>
+                )}
               </div>
               <div>
                 <label className="text-sm font-medium">Остаток</label>
@@ -197,15 +201,16 @@ export default function ProductFormModal({ product, initialSearchTerm, onClose, 
                 </select>
               </div>
               <div>
-                <label className="text-sm font-medium">Кол-во в упаковке (для поштучной продажи)</label>
-                <input type="number" min="0" className={inputClass} value={form.piecesPerPack} onChange={(e) => setForm({...form, piecesPerPack: e.target.value})} placeholder="0 = продажа целиком" />
+                <label className="text-sm font-medium">Штук в упаковке</label>
+                <input type="number" min="0" className={inputClass} value={form.piecesPerPack} onChange={(e) => setForm({...form, piecesPerPack: e.target.value})} placeholder="0" />
+                <p className="text-xs text-muted-foreground mt-1">Заполните, если продаёте поштучно</p>
               </div>
             </div>
             <div className="flex justify-end gap-3 pt-4">
               <button type="button" onClick={onClose} className="px-4 h-10 rounded-xl text-sm font-medium hover:bg-muted transition-colors border border-border">
                 Отмена
               </button>
-              <button type="submit" className="px-6 h-10 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/25 transition-all">
+              <button type="submit" className="px-6 h-10 rounded-lg text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary-hover transition-colors">
                 {product ? 'Сохранить' : 'Создать'}
               </button>
             </div>

@@ -59,9 +59,9 @@ export default function OrdersPage() {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'DRAFT': return <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-500/10 text-amber-500 border border-amber-500/20">Черновик</span>;
-      case 'COMPLETED': return <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-green-500/10 text-green-500 border border-green-500/20">Оприходован</span>;
-      case 'CANCELLED': return <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-red-500/10 text-red-500 border border-red-500/20">Отменен</span>;
+      case 'DRAFT': return <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-warning-soft text-warning border border-amber-500/20">Черновик</span>;
+      case 'COMPLETED': return <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-success-soft text-success border border-green-500/20">Оприходован</span>;
+      case 'CANCELLED': return <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-destructive-soft text-destructive border border-red-500/20">Отменен</span>;
       default: return <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium bg-gray-500/10 text-gray-500 border border-gray-500/20">{status}</span>;
     }
   };
@@ -72,19 +72,19 @@ export default function OrdersPage() {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <ClipboardList className="w-6 h-6 text-primary" />
             Заказы поставщикам
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">Создание заказов и оприходование товаров</p>
+          <p className="text-muted-foreground text-[13px]">Создание заказов и оприходование товаров</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={handleCreateDraft}
-            className="flex items-center gap-2 px-4 h-10 rounded-xl text-sm font-medium text-white bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-lg shadow-indigo-500/25 transition-all"
+            className="flex items-center gap-2 px-4 h-10 rounded-lg text-sm font-semibold text-primary-foreground bg-primary hover:bg-primary-hover transition-colors"
           >
             <Plus className="w-4 h-4" />
             Создать заказ
@@ -106,7 +106,7 @@ export default function OrdersPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl overflow-hidden" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
+      <div className="rounded-xl overflow-hidden" style={{ background: 'var(--color-card)', border: '1px solid var(--color-border)' }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -122,9 +122,9 @@ export default function OrdersPage() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">Загрузка...</td></tr>
+                <tr><td colSpan={6} className="px-4 py-5"><div className="space-y-3"><div className="skeleton w-2/3" /><div className="skeleton w-full" /><div className="skeleton w-4/5" /></div></td></tr>
               ) : filteredOrders.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">Заказы не найдены</td></tr>
+                <tr><td colSpan={6}><div className="empty-state"><b>Заказов пока нет</b><p>Создайте заказ поставщику кнопкой «Создать заказ».</p></div></td></tr>
               ) : (
                 filteredOrders.map(order => (
                   <tr
@@ -143,7 +143,7 @@ export default function OrdersPage() {
                       {order.status !== 'COMPLETED' && (
                         <button
                           onClick={(e) => handleDelete(e, order.id)}
-                          className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                          className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-muted-foreground hover:text-destructive hover:bg-destructive-soft transition-colors"
                           title="Удалить черновик"
                         >
                           <Trash2 className="w-4 h-4" />

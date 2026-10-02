@@ -1,17 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import { X, Banknote, CreditCard } from 'lucide-react';
+import { Banknote, CreditCard, Check } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import Numpad from './Numpad';
+import PosDialog from './PosDialog';
 
 interface PaymentModalProps {
   total: number;
+  itemsCount: number;
   onConfirm: (cashAmount: number, cardAmount: number) => void;
   onClose: () => void;
   loading: boolean;
 }
 
-function PaymentModal({ total, onConfirm, onClose, loading }: PaymentModalProps) {
+function PaymentModal({ total, itemsCount, onConfirm, onClose, loading }: PaymentModalProps) {
   const [cashAmount, setCashAmount] = useState(String(total));
   const [cardAmount, setCardAmount] = useState('0');
   const [activeField, setActiveField] = useState<'cash' | 'card'>('cash');
@@ -76,19 +77,10 @@ function PaymentModal({ total, onConfirm, onClose, loading }: PaymentModalProps)
     else handleCardChange(val);
   }, [activeField, cashAmount, cardAmount, handleCashChange, handleCardChange]);
 
-  const handleClear = useCallback(() => {
-    if (activeField === 'cash') handleCashChange('0');
-    else handleCardChange('0');
-  }, [activeField, handleCashChange, handleCardChange]);
-
-  // Quick cash presets
-  const presets = [
-    total,
-    Math.ceil(total / 1000) * 1000,
-    Math.ceil(total / 5000) * 5000,
-    Math.ceil(total / 10000) * 10000,
-    Math.ceil(total / 50000) * 50000,
-  ].filter((v, i, arr) => arr.indexOf(v) === i && v >= total).slice(0, 4);
+  // Быстрые суммы: ровно и ближайшие «круглые» купюры
+  const presets = [total, ...[10, 50, 100, 500].map((step) => Math.ceil(total / step) * step)]
+    .filter((v, i, arr) => arr.indexOf(v) === i && v >= total)
+    .slice(0, 4);
 
   // Keyboard
   useEffect(() => {
@@ -109,104 +101,86 @@ function PaymentModal({ total, onConfirm, onClose, loading }: PaymentModalProps)
     return () => window.removeEventListener('keydown', handler);
   }, [onClose, canPay, loading, cash, card, onConfirm, handleBackspace, handleNumpad]);
 
-  return createPortal(
-    <div
-      className="pos-modal-overlay"
-      data-pos-modal
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      <div className="pos-payment-modal animate-scaleIn">
-        {/* Header */}
-        <div className="pos-payment-header">
-          <h2 className="pos-payment-title">Оплата</h2>
-          <button className="pos-modal-close-btn" onClick={onClose}>
-            <X className="w-5 h-5" />
+  return (
+    <PosDialog
+      title="Оплата"
+      subtitle={`Позиций в чеке: ${itemsCount}`}
+      width={760}
+      onClose={onClose}
+      headerRight={
+        <div className="text-right">
+          <span className="block text-xs text-muted-foreground">К оплате</span>
+          <b className="pos-payment-total-value text-[28px] leading-tight num">{formatCurrency(total)}</b>
+        </div>
+      }
+      footer={
+        <>
+          <button type="button" className="btn btn-secondary btn-lg" onClick={onClose}>
+            Отмена <kbd>Esc</kbd>
           </button>
-        </div>
-
-        {/* Total */}
-        <div className="pos-payment-total">
-          <span className="pos-payment-total-label">К оплате</span>
-          <span className="pos-payment-total-value">{formatCurrency(total)}</span>
-        </div>
-
-        {/* Payment fields */}
-        <div className="pos-payment-fields">
-          {/* Cash */}
-          <div
-            className={`pos-payment-field ${activeField === 'cash' ? 'pos-payment-field--active' : ''}`}
+          <button
+            type="button"
+            className="btn btn-primary btn-lg pos-dialog-main-action"
+            disabled={!canPay || loading}
+            onClick={() => onConfirm(cash, card)}
+          >
+            <Check className="w-5 h-5" />
+            {loading ? 'Обработка…' : 'Оплатить'} <kbd>Enter</kbd>
+          </button>
+        </>
+      }
+    >
+      <div className="pos-payment-grid">
+        <div className="flex flex-col gap-2.5 min-w-0">
+          <button
+            type="button"
+            className={`pos-payfield ${activeField === 'cash' ? 'pos-payfield--active' : ''}`}
             onClick={() => setActiveField('cash')}
           >
-            <div className="pos-payment-field-icon pos-payment-field-icon--cash">
-              <Banknote className="w-5 h-5" />
-            </div>
-            <div className="pos-payment-field-info">
-              <span className="pos-payment-field-label">Наличные</span>
-              <span className="pos-payment-field-value">{cashAmount} смн.</span>
-            </div>
-          </div>
-
-          {/* Card */}
-          <div
-            className={`pos-payment-field ${activeField === 'card' ? 'pos-payment-field--active' : ''}`}
+            <Banknote className="w-[22px] h-[22px]" />
+            <span>Наличные</span>
+            <b className="pos-payment-field-value">{cashAmount.replace(".", ",")} смн.</b>
+          </button>
+          <button
+            type="button"
+            className={`pos-payfield ${activeField === 'card' ? 'pos-payfield--active' : ''}`}
             onClick={() => setActiveField('card')}
           >
-            <div className="pos-payment-field-icon pos-payment-field-icon--card">
-              <CreditCard className="w-5 h-5" />
+            <CreditCard className="w-[22px] h-[22px]" />
+            <span>Карта</span>
+            <b className="pos-payment-field-value">{cardAmount.replace(".", ",")} смн.</b>
+          </button>
+
+          {activeField === 'cash' && presets.length > 1 && (
+            <div className="pos-chips">
+              {presets.map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  className={`pos-chip num ${cash === preset ? 'pos-chip--active' : ''}`}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    handleCashChange(String(preset));
+                  }}
+                >
+                  {formatCurrency(preset)}
+                </button>
+              ))}
             </div>
-            <div className="pos-payment-field-info">
-              <span className="pos-payment-field-label">Карта</span>
-              <span className="pos-payment-field-value">{cardAmount} смн.</span>
-            </div>
+          )}
+
+          <div className={`pos-change ${canPay ? '' : 'pos-change--short'}`}>
+            <span>{canPay ? 'Сдача' : 'Не хватает'}</span>
+            <b className="pos-payment-change-value">{formatCurrency(Math.abs(change) < 0.005 ? 0 : Math.abs(change))}</b>
           </div>
         </div>
 
-        {/* Quick cash presets */}
-        {activeField === 'cash' && presets.length > 1 && (
-          <div className="pos-payment-presets">
-            {presets.map((preset) => (
-              <button
-                key={preset}
-                className="pos-payment-preset-btn"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  handleCashChange(String(preset));
-                }}
-              >
-                {formatCurrency(preset)}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Change */}
-        {change > 0.01 && (
-          <div className="pos-payment-change">
-            <span>Сдача</span>
-            <span className="pos-payment-change-value">{formatCurrency(change)}</span>
-          </div>
-        )}
-
-        {/* Numpad */}
         <Numpad
-          variant="payment"
           keys={['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'BS']}
-          onKey={key => (key === 'BS' ? handleBackspace() : handleNumpad(key))}
+          onKey={(key) => (key === 'BS' ? handleBackspace() : handleNumpad(key))}
         />
-
-        {/* Pay button */}
-        <button
-          className="pos-btn pos-btn--pay"
-          disabled={!canPay || loading}
-          onClick={() => onConfirm(cash, card)}
-        >
-          {loading ? 'Обработка...' : 'Оплатить'}
-        </button>
       </div>
-    </div>,
-    document.body
+    </PosDialog>
   );
 }
 

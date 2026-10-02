@@ -55,8 +55,8 @@ export default function PinPad({
   });
 
   const keyClass =
-    'h-16 rounded-2xl text-2xl font-semibold flex items-center justify-center transition-all duration-150 ' +
-    'hover:bg-muted active:scale-95 disabled:opacity-40 disabled:pointer-events-none select-none';
+    'h-14 rounded-[10px] text-xl font-semibold flex items-center justify-center transition-colors duration-150 ' +
+    'hover:bg-muted disabled:opacity-40 disabled:pointer-events-none select-none';
   const keyStyle = { border: '1px solid var(--color-border)', background: 'var(--color-card)' };
 
   return (
@@ -70,7 +70,7 @@ export default function PinPad({
               i < value.length
                 ? error
                   ? 'bg-destructive scale-110'
-                  : 'bg-gradient-to-br from-indigo-500 to-purple-600 scale-110'
+                  : 'bg-primary scale-110'
                 : 'border-2 border-muted-foreground/50'
             }`}
           />
