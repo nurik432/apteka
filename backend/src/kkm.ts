@@ -1,4 +1,6 @@
 import fs from 'fs';
+import net from 'net';
+import os from 'os';
 import path from 'path';
 
 // Клиент ККМ (фискального принтера): JSON по HTTP на http://<host>:<port>/api/...
@@ -6,7 +8,13 @@ import path from 'path';
 const SETTINGS_FILE = path.join(__dirname, '../../database/.kkm.json');
 
 const REQUEST_TIMEOUT_MS = 20000;
+const PROBE_TIMEOUT_MS = 400;
+const PROBE_BATCH = 64;
+const DISCOVERY_COOLDOWN_MS = 30000;
 const FFD_VERSION = 'VER_1';
+
+let lastDiscovery = 0;
+
 const TAX_TYPE = 'SIMPLIFIED1';
 const VAT_CODE = 'STANDARD';
 
@@ -62,10 +70,7 @@ export function kkmMessage(status: string): string {
   return statusMessages[status] || `Ответ ККМ: ${status}`;
 }
 
-async function post(endpoint: string, body: unknown): Promise<KkmResult> {
-  const { host, port } = getKkmSettings();
-  if (!host) return { status: 'NOT_CONFIGURED', raw: '' };
-
+async function send(host: string, port: number, endpoint: string, body: unknown): Promise<KkmResult> {
   let res: globalThis.Response;
   let raw: string;
   try {
@@ -91,6 +96,71 @@ async function post(endpoint: string, body: unknown): Promise<KkmResult> {
   if (!status) status = res.ok ? 'SUCCESS' : `HTTP_${res.status}`;
 
   return { status, raw: raw.slice(0, 2000) };
+}
+
+/** Открыт ли порт: только TCP-соединение, ККМ ничего не печатает */
+function probe(host: string, port: number): Promise<boolean> {
+  return new Promise(resolve => {
+    const socket = new net.Socket();
+    const finish = (open: boolean) => { socket.destroy(); resolve(open); };
+    socket.setTimeout(PROBE_TIMEOUT_MS);
+    socket.once('connect', () => finish(true));
+    socket.once('timeout', () => finish(false));
+    socket.once('error', () => finish(false));
+    socket.connect(port, host);
+  });
+}
+
+/**
+ * Ищет ККМ в своих подсетях /24. Адрес принтера выдаёт DHCP, и при перезапуске раздачи
+ * он меняется — без поиска кассир каждый раз правил бы адрес в настройках руками.
+ */
+export async function discover(port: number): Promise<string | null> {
+  const subnets = new Set<string>();
+  const own = new Set<string>();
+  for (const addresses of Object.values(os.networkInterfaces())) {
+    for (const address of addresses ?? []) {
+      if (address.family !== 'IPv4' || address.internal) continue;
+      // 169.254.x — адрес, который Windows присваивает сама, когда DHCP не ответил: искать там нечего
+      if (address.address.startsWith('169.254.')) continue;
+      own.add(address.address);
+      subnets.add(address.address.split('.').slice(0, 3).join('.'));
+    }
+  }
+
+  for (const subnet of subnets) {
+    const hosts = Array.from({ length: 254 }, (_, i) => `${subnet}.${i + 1}`).filter(h => !own.has(h));
+    // пачками, чтобы не открывать разом сотни сокетов
+    for (let i = 0; i < hosts.length; i += PROBE_BATCH) {
+      const batch = hosts.slice(i, i + PROBE_BATCH);
+      const results = await Promise.all(batch.map(async host => (await probe(host, port)) ? host : null));
+      const found = results.find(host => host !== null);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+async function post(endpoint: string, body: unknown): Promise<KkmResult> {
+  const settings = getKkmSettings();
+  if (!settings.host) return { status: 'NOT_CONFIGURED', raw: '' };
+
+  const result = await send(settings.host, settings.port, endpoint, body);
+  if (result.status !== 'UNAVAILABLE') return result;
+
+  // До ККМ не достучались. Возможно, сменился адрес — ищем её и запоминаем новый.
+  // Поиск небыстрый, поэтому не чаще раза в DISCOVERY_COOLDOWN_MS.
+  if (Date.now() - lastDiscovery < DISCOVERY_COOLDOWN_MS) return result;
+  lastDiscovery = Date.now();
+
+  const found = await discover(settings.port);
+  // Тот же адрес — значит ККМ на месте, а не ответила по другой причине: повторять запрос нельзя,
+  // чек мог уже напечататься. Повторяем только когда адрес действительно другой.
+  if (!found || found === settings.host) return result;
+
+  saveKkmSettings({ ...settings, host: found });
+  console.log(`ККМ найдена по новому адресу: ${found}`);
+  return send(found, settings.port, endpoint, body);
 }
 
 export function openShift(cashier: string): Promise<KkmResult> {

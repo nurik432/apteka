@@ -19,20 +19,33 @@ fi
 PORT="${PORT:-3001}"
 export PORT
 
+# Браузер на движке Chromium открывает программу отдельным окном (--app): без вкладок и адресной
+# строки. Firefox такого режима не имеет, поэтому с ним открываем обычным способом.
+open_app() {
+  local browser
+  for browser in google-chrome google-chrome-stable chromium chromium-browser brave-browser microsoft-edge; do
+    if command -v "$browser" >/dev/null 2>&1; then
+      "$browser" --app="http://localhost:$PORT" >/dev/null 2>&1 &
+      return 0
+    fi
+  done
+  xdg-open "http://localhost:$PORT" >/dev/null 2>&1
+}
+
 # Сервер уже работает (автозапуск или второй щелчок по ярлыку) — просто открываем программу
 if (exec 3<>"/dev/tcp/127.0.0.1/$PORT") 2>/dev/null; then
-  xdg-open "http://localhost:$PORT" >/dev/null 2>&1
+  open_app
   exit 0
 fi
 
 echo "Запуск сервера Аптеки..."
-echo "Сайт откроется в браузере, как только сервер поднимется."
+echo "Программа откроется отдельным окном, как только сервер поднимется."
 
-# Открываем браузер, когда сервер начнёт отвечать (ждём до минуты)
+# Открываем окно, когда сервер начнёт отвечать (ждём до минуты)
 (
   for _ in $(seq 60); do
     if (exec 3<>"/dev/tcp/127.0.0.1/$PORT") 2>/dev/null; then
-      xdg-open "http://localhost:$PORT" >/dev/null 2>&1
+      open_app
       break
     fi
     sleep 1
