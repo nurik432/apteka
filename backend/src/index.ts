@@ -16,6 +16,7 @@ import reportRoutes from './routes/reports';
 import analyticsRoutes from './routes/analytics';
 import { importRouter, exportRouter } from './routes/import-export';
 import ordersRoutes from './routes/orders';
+import kkmRoutes from './routes/kkm';
 
 
 const app = express();
@@ -50,6 +51,7 @@ app.use('/api/analytics', analyticsRoutes);
 app.use('/api/import', importRouter);
 app.use('/api/export', exportRouter);
 app.use('/api/orders', ordersRoutes);
+app.use('/api/kkm', kkmRoutes);
 
 
 // Health check

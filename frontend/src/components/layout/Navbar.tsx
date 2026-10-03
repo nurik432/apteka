@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Package,
   ShoppingCart,
+  Printer,
   Warehouse,
   ClipboardList,
   Truck,
@@ -40,6 +41,7 @@ type MenuEntry = MenuItem | MenuGroup;
 const menu: MenuEntry[] = [
   { path: '/', icon: LayoutDashboard, label: 'Главная', roles: pageRoles.dashboard },
   { path: '/pos', icon: ShoppingCart, label: 'Касса', roles: pageRoles.pos },
+  { path: '/kkm', icon: Printer, label: 'ККМ', roles: pageRoles.kkm },
   {
     label: 'Товары',
     icon: Package,

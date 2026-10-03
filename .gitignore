@@ -6,11 +6,13 @@ database/*.db
 database/*.db-journal
 database/.jwt-secret
 database/.last-backup
+database/.kkm.json
 database/backups/
 
 # Build output
 frontend/dist/
 backend/dist/
+backend/public/
 
 # Environment
 .env

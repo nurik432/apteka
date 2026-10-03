@@ -1,16 +1,27 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { formatDateTime, notifyError } from '@/lib/utils';
-import { Download, KeyRound } from 'lucide-react';
+import { Download, KeyRound, Save } from 'lucide-react';
+import { toast } from 'sonner';
+
+const inputClass = 'w-full h-10 px-3 mt-1 rounded-lg text-sm';
+const inputStyle = { background: 'var(--color-card)', color: 'var(--color-foreground)', border: '1px solid var(--color-border-strong)' };
 
 export default function SettingsPage() {
   const [backupLoading, setBackupLoading] = useState(false);
   const [lastBackupAt, setLastBackupAt] = useState<string | null>(null);
   const [staff, setStaff] = useState<number | null>(null);
+  const [kkm, setKkm] = useState({ host: '', port: '8002', vatPercent: '7' });
+  const [kkmSaving, setKkmSaving] = useState(false);
 
   const loadInfo = async () => {
     try {
-      const [backupRes, usersRes] = await Promise.all([api.get('/export/backup-info'), api.get('/users')]);
+      const [backupRes, usersRes, kkmRes] = await Promise.all([
+        api.get('/export/backup-info'),
+        api.get('/users'),
+        api.get('/kkm/settings'),
+      ]);
+      setKkm({ host: kkmRes.data.host, port: String(kkmRes.data.port), vatPercent: String(kkmRes.data.vatPercent) });
       setLastBackupAt(backupRes.data.lastBackupAt);
       setStaff(usersRes.data.filter((u: { active: boolean }) => u.active).length);
     } catch (err) {
@@ -34,6 +45,23 @@ export default function SettingsPage() {
       notifyError(err, 'Не удалось создать резервную копию');
     }
     setBackupLoading(false);
+  };
+
+  const handleKkmSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setKkmSaving(true);
+    try {
+      const res = await api.put('/kkm/settings', {
+        host: kkm.host,
+        port: Number(kkm.port),
+        vatPercent: Number(kkm.vatPercent.replace(',', '.')),
+      });
+      setKkm({ host: res.data.host, port: String(res.data.port), vatPercent: String(res.data.vatPercent) });
+      toast.success('Настройки ККМ сохранены');
+    } catch (err) {
+      notifyError(err, 'Не удалось сохранить настройки ККМ');
+    }
+    setKkmSaving(false);
   };
 
   const rows: [string, string][] = [
@@ -83,6 +111,59 @@ export default function SettingsPage() {
             Сменить свой PIN-код: нажмите на своё имя в правом верхнем углу.
           </p>
         </div>
+
+        <form onSubmit={handleKkmSave} className="rounded-xl bg-card border p-[18px] flex flex-col gap-2.5">
+          <h2 className="text-base font-bold">ККМ</h2>
+          <p className="text-sm text-muted-foreground">
+            Адрес фискального принтера в локальной сети. Чеки отправляются на него из раздела «ККМ».
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="col-span-2">
+              <label htmlFor="kkm-host" className="text-sm font-medium">IP-адрес</label>
+              <input
+                id="kkm-host"
+                type="text"
+                placeholder="192.168.0.200"
+                value={kkm.host}
+                onChange={e => setKkm({ ...kkm, host: e.target.value })}
+                className={`${inputClass} num`}
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <label htmlFor="kkm-port" className="text-sm font-medium">Порт</label>
+              <input
+                id="kkm-port"
+                type="text"
+                inputMode="numeric"
+                required
+                value={kkm.port}
+                onChange={e => setKkm({ ...kkm, port: e.target.value })}
+                className={`${inputClass} num`}
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <label htmlFor="kkm-vat" className="text-sm font-medium">НДС, %</label>
+              <input
+                id="kkm-vat"
+                type="text"
+                inputMode="decimal"
+                required
+                value={kkm.vatPercent}
+                onChange={e => setKkm({ ...kkm, vatPercent: e.target.value })}
+                className={`${inputClass} num`}
+                style={inputStyle}
+              />
+            </div>
+          </div>
+          <div className="mt-1">
+            <button type="submit" disabled={kkmSaving} className="btn btn-primary">
+              <Save className="w-4 h-4" />
+              {kkmSaving ? 'Сохранение…' : 'Сохранить'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

@@ -102,6 +102,20 @@ model Sale {
   cashAmount  Float      @default(0)
   cardAmount  Float      @default(0)
   createdAt   DateTime   @default(now())
+  fiscalReceipts FiscalReceipt[]
+}
+
+// Попытка печати чека продажи на ККМ: одна запись на каждую отправку
+model FiscalReceipt {
+  id        Int      @id @default(autoincrement())
+  saleId    Int
+  sale      Sale     @relation(fields: [saleId], references: [id])
+  status    String   // SUCCESS либо код ошибки ККМ (INVALID_DOC, SHIFT_MUST_BE_OPEN, UNAVAILABLE, ...)
+  response  String?  // ответ ККМ как есть
+  userId    Int?
+  createdAt DateTime @default(now())
+
+  @@index([saleId])
 }
 
 model SaleItem {

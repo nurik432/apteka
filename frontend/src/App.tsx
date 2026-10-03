@@ -8,6 +8,7 @@ import LoginPage from '@/pages/LoginPage';
 import DashboardPage from '@/pages/DashboardPage';
 import ProductsPage from '@/pages/ProductsPage';
 import POSPage from '@/pages/pos/POSPage';
+import KkmPage from '@/pages/KkmPage';
 import WarehousePage from '@/pages/WarehousePage';
 import InventoryPage from '@/pages/InventoryPage';
 import ExpiryPage from '@/pages/ExpiryPage';
@@ -66,6 +67,7 @@ function AppRoutes() {
         <Route index element={<DashboardPage />} />
         <Route path="products" element={<ProtectedRoute roles={pageRoles.products}><ProductsPage /></ProtectedRoute>} />
         <Route path="pos" element={<ProtectedRoute roles={pageRoles.pos}><POSPage /></ProtectedRoute>} />
+        <Route path="kkm" element={<ProtectedRoute roles={pageRoles.kkm}><KkmPage /></ProtectedRoute>} />
         <Route path="warehouse" element={<ProtectedRoute roles={pageRoles.warehouse}><WarehousePage /></ProtectedRoute>} />
         <Route path="inventory" element={<ProtectedRoute roles={pageRoles.inventory}><InventoryPage /></ProtectedRoute>} />
         <Route path="expiry" element={<ProtectedRoute roles={pageRoles.expiry}><ExpiryPage /></ProtectedRoute>} />

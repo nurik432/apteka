@@ -8,6 +8,7 @@ const MGMT = ['ADMIN', 'MANAGER'];
 export const pageRoles = {
   dashboard: ALL,
   pos: ['ADMIN', 'PHARMACIST'],
+  kkm: ['ADMIN', 'MANAGER', 'PHARMACIST'],
   products: ALL,
   expiry: ALL,
   dictionaries: MGMT,
