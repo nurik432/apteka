@@ -13,6 +13,8 @@ database/backups/
 frontend/dist/
 backend/dist/
 backend/public/
+backend/build-info.txt
+apteka-build.tar.gz
 
 # Environment
 .env
