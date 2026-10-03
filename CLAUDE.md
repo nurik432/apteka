@@ -10,6 +10,7 @@ Apteka: offline pharmacy inventory and POS system (products, warehouse, sales, o
 ## Commands
 - install: `npm install` (root; postinstall installs backend and frontend)
 - setup db: `npm run setup` (prisma generate, db push, seed)
+- in a fresh worktree run `npm install` before any `npx prisma`: with no local CLI, npx pulls Prisma 7, which rejects `url` in `schema.prisma` — the project is on Prisma 6. A worktree also has its own empty `database/`, so `npm run setup` there builds a separate DB
 - dev: `npm run dev` (backend :3001 + Vite frontend)
 - build: `npm run build` (frontend: `tsc -b && vite build`)
 - typecheck: `cd backend && npx tsc --noEmit` / `cd frontend && npx tsc --noEmit -p .`
