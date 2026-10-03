@@ -1,2 +1,4 @@
 # cmd.exe ломает .bat с кириллицей, если строки заканчиваются на LF
 *.bat text eol=crlf
+# bash не запускает скрипты с CRLF
+*.sh text eol=lf
