@@ -28,7 +28,7 @@ interface KkmReport {
   attempts: KkmAttempt[];
 }
 
-interface KkmResponse {
+export interface KkmResponse {
   ok: boolean;
   status: string;
   message: string;
@@ -64,12 +64,13 @@ function SkeletonRow({ colSpan }: { colSpan: number }) {
   );
 }
 
-function notifyKkm(data: KkmResponse) {
+export function notifyKkm(data: KkmResponse) {
   if (data.ok) toast.success(data.message);
   else toast.error(data.message, { id: data.message });
 }
 
-function SalesTab() {
+// SalesTab и ShiftTab используются и в окне «ККМ» на кассе (pos/components/KkmModal.tsx)
+export function SalesTab() {
   const [sales, setSales] = useState<KkmSale[]>([]);
   const [loading, setLoading] = useState(true);
   const [sendingId, setSendingId] = useState<number | null>(null);
@@ -219,7 +220,7 @@ function ReportTab() {
   );
 }
 
-function ShiftTab() {
+export function ShiftTab() {
   const [busy, setBusy] = useState<string | null>(null);
 
   const run = async (endpoint: string, fallback: string) => {

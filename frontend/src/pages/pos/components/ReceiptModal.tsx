@@ -1,7 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, Printer } from 'lucide-react';
-import { formatCurrency, formatDateTime } from '@/lib/utils';
+import { Check, Printer, Receipt } from 'lucide-react';
+import api from '@/lib/api';
+import { formatCurrency, formatDateTime, notifyError } from '@/lib/utils';
+import { notifyKkm, type KkmResponse } from '@/pages/KkmPage';
 
 interface ReceiptModalProps {
   sale: any;
@@ -24,6 +26,21 @@ function ReceiptModal({ sale, change, onClose }: ReceiptModalProps) {
   }, [onClose]);
 
   const paid = (sale.cashAmount || 0) + (sale.cardAmount || 0) + change;
+
+  // Фискальный чек печатается выборочно — только по кнопке
+  const [kkmState, setKkmState] = useState<'idle' | 'sending' | 'done'>('idle');
+
+  const sendToKkm = async () => {
+    setKkmState('sending');
+    try {
+      const res = await api.post<KkmResponse>(`/kkm/sales/${sale.id}/send`);
+      notifyKkm(res.data);
+      setKkmState(res.data.ok ? 'done' : 'idle');
+    } catch (err) {
+      notifyError(err, 'Не удалось отправить чек на ККМ');
+      setKkmState('idle');
+    }
+  };
 
   return createPortal(
     <div
@@ -68,6 +85,17 @@ function ReceiptModal({ sale, change, onClose }: ReceiptModalProps) {
                 <span>Сдача</span>
                 <span>{formatCurrency(change)}</span>
               </div>
+            )}
+          </div>
+
+          <div className="w-full no-print">
+            {kkmState === 'done' ? (
+              <span className="badge status-green">Чек напечатан на ККМ</span>
+            ) : (
+              <button type="button" className="btn btn-secondary w-full" disabled={kkmState === 'sending'} onClick={sendToKkm}>
+                <Receipt className="w-4 h-4" />
+                {kkmState === 'sending' ? 'Печать на ККМ…' : 'Напечатать чек на ККМ'}
+              </button>
             )}
           </div>
         </div>

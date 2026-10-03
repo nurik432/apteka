@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, RotateCcw, Percent, PauseCircle, Plus, Search, ListRestart } from 'lucide-react';
+import { Trash2, RotateCcw, Percent, PauseCircle, Plus, Search, ListRestart, Printer } from 'lucide-react';
 
 interface QuickActionsProps {
   onSearch: () => void;
@@ -9,6 +9,7 @@ interface QuickActionsProps {
   onHoldReceipt: () => void;
   onShowHeld: () => void;
   onCustomItem: () => void;
+  onKkm: () => void;
   cartLength: number;
   heldReceiptsCount: number;
   refocusBarcode: () => void;
@@ -22,6 +23,7 @@ function QuickActions({
   onHoldReceipt,
   onShowHeld,
   onCustomItem,
+  onKkm,
   cartLength,
   heldReceiptsCount,
   refocusBarcode,
@@ -39,6 +41,7 @@ function QuickActions({
       badge: heldReceiptsCount > 0 ? heldReceiptsCount : undefined,
       keepFocus: true,
     },
+    { icon: Printer, label: 'ККМ', onClick: onKkm, disabled: false, keepFocus: true },
     { icon: RotateCcw, label: 'Возврат', onClick: onReturn, disabled: false },
     { icon: Trash2, label: 'Очистить чек', hotkey: 'F3', onClick: onClearCart, disabled: cartLength === 0, danger: true },
   ];

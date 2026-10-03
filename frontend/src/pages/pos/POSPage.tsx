@@ -8,6 +8,7 @@ import BarcodeInput from './components/BarcodeInput';
 import ReceiptTable from './components/ReceiptTable';
 import ProductSearchPanel from './components/ProductSearchPanel';
 import HeldReceiptsModal from './components/HeldReceiptsModal';
+import KkmModal from './components/KkmModal';
 import QuickActions from './components/QuickActions';
 import CalculatorModal from './components/CalculatorModal';
 import PaymentModal from './components/PaymentModal';
@@ -52,13 +53,16 @@ export default function POSPage() {
   // Product search panel (F4)
   const [showSearch, setShowSearch] = useState(false);
 
+  // Окно ККМ: чеки последних продаж и смена
+  const [showKkm, setShowKkm] = useState(false);
+
   // Refs
   const barcodeRef = useRef<HTMLInputElement>(null);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   // ─── Barcode scanner auto-focus ────────────────────────────
   // Панель поиска держит фокус в своём поле, поэтому на время её работы сканер и горячие клавиши отключены
-  const hasModal = showPayment || showReceipt || !!calculatorItem || showDiscountModal || !!tabletProduct || showCustomItemModal || showHeld || showSearch;
+  const hasModal = showPayment || showReceipt || !!calculatorItem || showDiscountModal || !!tabletProduct || showCustomItemModal || showHeld || showSearch || showKkm;
   const { refocusBarcode } = useBarcodeScanner(barcodeRef, { disabled: hasModal });
 
   // ─── Derived values ────────────────────────────────────────
@@ -432,6 +436,7 @@ export default function POSPage() {
           onHoldReceipt={holdReceipt}
           onShowHeld={() => setShowHeld(true)}
           onCustomItem={() => setShowCustomItemModal(true)}
+          onKkm={() => setShowKkm(true)}
           cartLength={cart.length}
           heldReceiptsCount={heldReceipts.length}
           refocusBarcode={refocusBarcode}
@@ -483,6 +488,15 @@ export default function POSPage() {
           receipts={heldReceipts}
           onRestore={restoreReceipt}
           onClose={() => setShowHeld(false)}
+        />
+      )}
+
+      {showKkm && (
+        <KkmModal
+          onClose={() => {
+            setShowKkm(false);
+            refocusBarcode();
+          }}
         />
       )}
 
