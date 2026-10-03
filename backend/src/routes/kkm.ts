@@ -4,6 +4,7 @@ import { AuthRequest, authMiddleware, roleGuard } from '../middleware/auth';
 import {
   KkmResult,
   closeShift,
+  discover,
   getKkmSettings,
   kkmMessage,
   openShift,
@@ -170,6 +171,31 @@ router.post('/x-report', async (_req: AuthRequest, res: Response): Promise<void>
 // GET /api/kkm/settings — адрес ККМ и ставка НДС
 router.get('/settings', (_req: AuthRequest, res: Response): void => {
   res.json(getKkmSettings());
+});
+
+// POST /api/kkm/discover — найти ККМ в локальной сети и запомнить её адрес
+router.post('/discover', roleGuard('ADMIN'), async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const settings = getKkmSettings();
+    // Порт берём из формы: кассир мог поменять его, ещё не нажав «Сохранить»
+    const port = Number(req.body?.port) || settings.port;
+
+    const host = await discover(port);
+    if (!host) {
+      res.status(404).json({ error: 'ККМ не найдена. Проверьте, что принтер включён и подключён кабелем' });
+      return;
+    }
+
+    const error = saveKkmSettings({ ...settings, host, port });
+    if (error) {
+      res.status(400).json({ error });
+      return;
+    }
+    res.json(getKkmSettings());
+  } catch (error) {
+    console.error('Discover KKM error:', error);
+    res.status(500).json({ error: 'Не удалось найти ККМ' });
+  }
 });
 
 // PUT /api/kkm/settings — сохранить настройки ККМ

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { formatDateTime, notifyError } from '@/lib/utils';
-import { Download, KeyRound, Save } from 'lucide-react';
+import { Download, KeyRound, Save, Search } from 'lucide-react';
 import { toast } from 'sonner';
 
 const inputClass = 'w-full h-10 px-3 mt-1 rounded-lg text-sm';
@@ -13,6 +13,7 @@ export default function SettingsPage() {
   const [staff, setStaff] = useState<number | null>(null);
   const [kkm, setKkm] = useState({ host: '', port: '8002', vatPercent: '7' });
   const [kkmSaving, setKkmSaving] = useState(false);
+  const [kkmSearching, setKkmSearching] = useState(false);
 
   const loadInfo = async () => {
     try {
@@ -62,6 +63,18 @@ export default function SettingsPage() {
       notifyError(err, 'Не удалось сохранить настройки ККМ');
     }
     setKkmSaving(false);
+  };
+
+  const handleKkmDiscover = async () => {
+    setKkmSearching(true);
+    try {
+      const res = await api.post('/kkm/discover', { port: Number(kkm.port) });
+      setKkm({ host: res.data.host, port: String(res.data.port), vatPercent: String(res.data.vatPercent) });
+      toast.success(`ККМ найдена: ${res.data.host}`);
+    } catch (err) {
+      notifyError(err, 'Не удалось найти ККМ');
+    }
+    setKkmSearching(false);
   };
 
   const rows: [string, string][] = [
@@ -115,7 +128,9 @@ export default function SettingsPage() {
         <form onSubmit={handleKkmSave} className="rounded-xl bg-card border p-[18px] flex flex-col gap-2.5">
           <h2 className="text-base font-bold">ККМ</h2>
           <p className="text-sm text-muted-foreground">
-            Адрес фискального принтера в локальной сети. Чеки отправляются на него из раздела «ККМ».
+            Нажмите «Найти ККМ» — программа сама отыщет фискальный принтер в локальной сети.
+            Адрес ниже нужен, только если принтер стоит в другой сети и его приходится указать вручную.
+            Чеки отправляются на него из раздела «ККМ».
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="col-span-2">
@@ -157,8 +172,17 @@ export default function SettingsPage() {
               />
             </div>
           </div>
-          <div className="mt-1">
-            <button type="submit" disabled={kkmSaving} className="btn btn-primary">
+          <div className="mt-1 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleKkmDiscover}
+              disabled={kkmSearching || kkmSaving}
+              className="btn btn-primary"
+            >
+              <Search className={`w-4 h-4 ${kkmSearching ? 'animate-spin' : ''}`} />
+              {kkmSearching ? 'Поиск…' : 'Найти ККМ'}
+            </button>
+            <button type="submit" disabled={kkmSaving || kkmSearching} className="btn btn-secondary">
               <Save className="w-4 h-4" />
               {kkmSaving ? 'Сохранение…' : 'Сохранить'}
             </button>
