@@ -78,6 +78,8 @@ PIN других сотрудников администратор меняет 
 | Запуск сервера и браузера | `2_start_apteka.bat` | `./2_start_apteka.sh` |
 | Автозапуск при входе в систему | `3_setup_autorun.bat` | `./3_setup_autorun.sh` |
 | Сброс PIN администратора | `4_reset_admin_pin.bat` | `./4_reset_admin_pin.sh` |
+| Готовая сборка для слабого компьютера | `5_pack_build.bat` | — |
+| Быстрый Firefox вместо snap-версии | — | `./6_install_firefox.sh` |
 
 На Linux сначала установите Node.js 18.18 или новее: `sudo apt install nodejs npm`. При автозапуске вывод сервера пишется в `database/server.log`.
 
