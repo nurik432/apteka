@@ -2,3 +2,5 @@
 *.bat text eol=crlf
 # bash не запускает скрипты с CRLF
 *.sh text eol=lf
+# готовая сборка для слабых компьютеров хранится как есть
+*.tar.gz binary
