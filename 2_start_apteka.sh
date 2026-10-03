@@ -9,7 +9,8 @@ if [ ! -t 1 ]; then
   exec >>"$ROOT/database/server.log" 2>&1
 fi
 
-if [ ! -f dist/index.js ]; then
+# Без public/ сервер запустится, но в браузере будет «Cannot GET /»
+if [ ! -f dist/index.js ] || [ ! -f public/index.html ]; then
   echo "Проект не собран. Сначала запустите ./1_install_and_build.sh"
   if [ -t 0 ]; then read -rp "Нажмите Enter для выхода..." _; fi
   exit 1

@@ -30,14 +30,17 @@ if [ -f "$ARCHIVE" ]; then
   PREBUILT=1
   echo "Найден архив готовой сборки $ARCHIVE — сборка на этом компьютере пропускается."
 
-  # Архив должен быть собран из той же версии кода, иначе сервер не совпадёт со схемой базы
+  # Архив должен быть собран из той же версии кода, иначе сервер не совпадёт со схемой базы.
+  # Разные коммиты допустимы, если между ними не менялись backend/ и frontend/ (правки скриптов, документации).
   BUILT_FROM=$(tar -xzOf "$ARCHIVE" build-info.txt 2>/dev/null | tr -d '\r\n ' || true)
   HERE=$(git rev-parse HEAD 2>/dev/null || true)
   if [ -n "$BUILT_FROM" ] && [ "$BUILT_FROM" != unknown ] && [ -n "$HERE" ] && [ "$BUILT_FROM" != "$HERE" ]; then
-    fail "архив собран из другой версии программы.
+    if ! git cat-file -e "$BUILT_FROM^{commit}" 2>/dev/null || ! git diff --quiet "$BUILT_FROM" HEAD -- backend frontend; then
+      fail "архив собран из другой версии программы.
 Версия в архиве:   ${BUILT_FROM:0:7}
 Версия на этом ПК: ${HERE:0:7}
 Обновите обе стороны (git pull) и соберите архив заново, либо удалите $ARCHIVE."
+    fi
   fi
 fi
 
